@@ -330,6 +330,7 @@ button.avatar { cursor: pointer }
           <div id="roomSetup" class="roombox">
             
             <div class="row"><button class="btn primary" id="roomCreate">Create a room</button></div>
+            <p class="note msg-bad" id="roomErr" hidden></p>
             <div class="row"><input class="inp" id="roomCode" maxlength="5" placeholder="Room code" autocomplete="off" aria-label="Room code"><button class="btn" id="roomJoin">Join room</button></div>
           </div>
           <div id="roomLive" hidden><span class="label">Room code</span><div class="roomcode" id="roomShow"></div><p class="note" id="roomHint"></p></div>
@@ -1627,44 +1628,89 @@ button.avatar { cursor: pointer }
   let roomsOn = false, rtc = null;
   const ROOM = 'classroom-chess-room-';
   const num = (v, lo, hi, d) => { v = Number(v); return v >= lo && v <= hi ? v : d; };
-  function loadPeer() {
-    return new Promise((res, rej) => {
-      if (window.Peer) return res();
-      const sc = document.createElement('script');
-      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js';
-      sc.onload = () => res(); sc.onerror = () => rej();
-      document.head.appendChild(sc);
-    });
+  const PEER_SRC = [
+    'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js',
+    'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js',
+    'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'
+  ];
+  async function loadPeer() {
+    for (const src of PEER_SRC) {
+      if (window.Peer) return;
+      try {
+        await new Promise((res, rej) => {
+          const sc = document.createElement('script'); sc.src = src;
+          sc.onload = res; sc.onerror = () => { sc.remove(); rej(); };
+          document.head.appendChild(sc);
+        });
+      } catch (e) {}
+    }
+    if (!window.Peer) throw new Error('blocked');
   }
   function myRoomName() { return prefs.name || 'Classmate'; }
   function startRoom(code, host) {
     closeOnline(); newGame();
     myId = 'me';
     og = { id: 'room-' + code + '-' + Date.now(), p2p: true, code, host, data: { w: null, b: null, status: 'open', moves: [] } };
-    og.unsub = () => { try { if (rtc) rtc.peer.destroy(); } catch (e) {} rtc = null; };
+    og.unsub = () => { try { if (rtc && rtc.peer) rtc.peer.destroy(); } catch (e) {} rtc = null; };
     return og;
   }
-  function roomFail(mine, msg) { if (og !== mine) return; toast(msg); if (og.data.status !== 'active') { closeOnline(); render(); } }
+  function roomErr(msg) { $('roomErr').textContent = msg || ''; $('roomErr').hidden = !msg; }
+  function roomFail(mine, msg) {
+    if (og !== mine) return;
+    if (og.data.status !== 'active') { closeOnline(); render(); roomErr(msg); }
+    else toast(msg);
+  }
+  const RETRY = ['network', 'server-error', 'socket-error', 'socket-closed'];
+  const why = e => ' (reason: ' + ((e && e.type) || 'unknown') + ')';
+  function openPeer(id, mine, tries) {
+    return new Promise((res, rej) => {
+      let opened = false, peer;
+      try { peer = id ? new Peer(id) : new Peer(); } catch (e) { return rej({ type: 'browser-incompatible' }); }
+      peer.on('open', () => { opened = true; res(peer); });
+      peer.on('error', e => {
+        if (opened) return;
+        try { peer.destroy(); } catch (x) {}
+        if (og === mine && RETRY.includes(e.type) && tries > 1) setTimeout(() => { if (og === mine) openPeer(id, mine, tries - 1).then(res, rej); else rej(e); }, 1500);
+        else rej(e);
+      });
+    });
+  }
+  function keepAlive(peer, mine) {
+    peer.on('disconnected', () => { if (og === mine && !peer.destroyed) setTimeout(() => { try { peer.reconnect(); } catch (e) {} }, 1000); });
+  }
   async function createRoom() {
-    audio();
-    try { await loadPeer(); } catch (e) { return toast('Could not reach the connection service. It may be blocked on this network.'); }
+    audio(); roomErr('');
+    $('roomCreate').disabled = true;
+    try { await loadPeer(); } catch (e) { $('roomCreate').disabled = false; return roomErr('Could not load the room system. This network may block it.'); }
+    $('roomCreate').disabled = false;
     const code = Array.from({ length: 5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random() * 24)]).join('');
     const mine = startRoom(code, true), color = Math.random() < 0.5 ? 'w' : 'b';
     mine.data[color] = 'me'; mine.hostColor = color; myColor = color; flipped = color === 'b';
-    const peer = new Peer(ROOM + code); rtc = { peer, conn: null };
-    peer.on('error', e => roomFail(mine, e.type === 'unavailable-id' ? 'That room code is already in use. Try again.' : 'Could not open a room. The connection may be blocked on this network.'));
+    rtc = { peer: null, conn: null }; mine.connecting = true; render();
+    let peer;
+    try { peer = await openPeer(ROOM + code, mine, 3); }
+    catch (e) { return roomFail(mine, (e.type === 'unavailable-id' ? 'That room code was already taken. Press Create a room again.' : 'Could not open a room. This network may block online play.') + why(e)); }
+    if (og !== mine) { try { peer.destroy(); } catch (x) {} return; }
+    rtc.peer = peer; mine.connecting = false; keepAlive(peer, mine); render();
+    peer.on('error', e => { if (og === mine && mine.data.status === 'open' && e.type !== 'peer-unavailable') toast('Room connection problem' + why(e)); });
     peer.on('connection', conn => { if (og !== mine || rtc.conn) return conn.close(); rtc.conn = conn; wire(conn, mine); });
-    render();
   }
   async function joinRoom() {
-    audio();
+    audio(); roomErr('');
     const code = $('roomCode').value.trim().toUpperCase();
-    if (code.length < 5) return toast('Type the five-letter room code first.');
-    try { await loadPeer(); } catch (e) { return toast('Could not reach the connection service. It may be blocked on this network.'); }
-    const mine = startRoom(code, false), peer = new Peer(); rtc = { peer, conn: null };
-    peer.on('error', e => roomFail(mine, e.type === 'peer-unavailable' ? 'No room with that code was found.' : 'Could not connect. The connection may be blocked on this network.'));
-    peer.on('open', () => { if (og !== mine) return; const conn = peer.connect(ROOM + code, { reliable: true }); rtc.conn = conn; wire(conn, mine); });
-    render();
+    if (code.length < 5) return roomErr('Type the five-letter room code first.');
+    $('roomJoin').disabled = true;
+    try { await loadPeer(); } catch (e) { $('roomJoin').disabled = false; return roomErr('Could not load the room system. This network may block it.'); }
+    $('roomJoin').disabled = false;
+    const mine = startRoom(code, false); rtc = { peer: null, conn: null }; mine.connecting = true; render();
+    let peer;
+    try { peer = await openPeer(null, mine, 3); }
+    catch (e) { return roomFail(mine, 'Could not connect. This network may block online play.' + why(e)); }
+    if (og !== mine) { try { peer.destroy(); } catch (x) {} return; }
+    rtc.peer = peer; mine.connecting = false; keepAlive(peer, mine); render();
+    peer.on('error', e => roomFail(mine, e.type === 'peer-unavailable' ? 'No room with code ' + code + ' was found. Check the code, and that your classmate still has the room open.' : 'Lost the connection' + why(e)));
+    const conn = peer.connect(ROOM + code, { reliable: true }); rtc.conn = conn; wire(conn, mine);
+    setTimeout(() => { if (og === mine && mine.data.status === 'open') roomFail(mine, 'Found the room but could not link up with it. One of your networks may block direct connections. Try different wifi or mobile data.'); }, 20000);
   }
   function wire(conn, mine) {
     conn.on('open', () => { if (og === mine && !mine.host) conn.send({ t: 'hello', elo: profile.elo, rd: profile.rd, name: myRoomName() }); });
@@ -1712,7 +1758,7 @@ button.avatar { cursor: pointer }
     $('roomSetup').hidden = live; $('roomLive').hidden = !live; $('lobbyNote').hidden = live;
     if (live) {
       $('roomShow').textContent = og.code;
-      $('roomHint').textContent = og.data.status === 'open' ? (og.host ? 'Tell your classmate this code. The game starts when they join.' : 'Connecting to the room…') : og.data.status === 'active' ? 'Game in progress.' : 'Game over. Go back to the lobby to play again.';
+      $('roomHint').textContent = og.connecting ? 'Connecting…' : og.data.status === 'open' ? (og.host ? 'Tell your classmate this code. The game starts when they join.' : 'Joining the room…') : og.data.status === 'active' ? 'Game in progress.' : 'Game over. Go back to the lobby to play again.';
     }
   }
   $('roomCreate').onclick = createRoom;
