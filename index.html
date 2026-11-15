@@ -191,6 +191,10 @@ button.avatar { cursor: pointer }
 .badge { position: absolute; left: 0; top: 0; width: 12.5%; height: 12.5%; z-index: 4 }
 .badge b { position: absolute; top: 3%; right: 3%; min-width: 36%; height: 36%; padding: 0 5%; border-radius: 99px; display: grid; place-items: center; color: #fff; font: 700 2.5cqw var(--body); box-shadow: 0 .3cqw .6cqw rgba(0,0,0,.4) }
 .arrow { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3 }
+.inp { font: inherit; color: inherit; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; flex: 1 1 110px; min-height: 38px }
+#roomCode { text-transform: uppercase; letter-spacing: .15em; font-weight: 600 }
+.roombox { display: flex; flex-direction: column; gap: 10px }
+.roomcode { font: 700 26px var(--display); letter-spacing: .18em; color: var(--accent) }
 .note { color: var(--muted); font-size: 13.5px; margin: 0 }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; z-index: 30; max-width: calc(100% - 32px) }
 </style>
@@ -233,7 +237,7 @@ button.avatar { cursor: pointer }
     <button class="btn primary big" id="continueBtn" hidden>Continue your game</button>
     <div class="modegrid">
       <button class="modecard" data-go="bot"><span class="g" aria-hidden="true">&#9822;&#xFE0E;</span><span class="t"><b>Play the computer</b><small>Fourteen opponents, from beginner to strong.</small></span><span class="tag">Practice</span></button>
-      <button class="modecard" data-go="online"><span class="g" aria-hidden="true">&#9819;&#xFE0E;</span><span class="t"><b>Play a classmate</b><small>Create or join a game and climb the class ladder.</small></span><span class="tag">Rated</span></button>
+      <button class="modecard" data-go="online"><span class="g" aria-hidden="true">&#9819;&#xFE0E;</span><span class="t"><b>Play a classmate</b><small>Play a friend online and move your rating.</small></span><span class="tag">Rated</span></button>
       <button class="modecard" data-go="local"><span class="g" aria-hidden="true">&#9823;&#xFE0E;</span><span class="t"><b>Pass &amp; play</b><small>Two people take turns on this screen.</small></span><span class="tag">Practice</span></button>
       <button class="modecard" data-go="puzzle"><span class="g" aria-hidden="true">&#9820;&#xFE0E;</span><span class="t"><b>Puzzles</b><small>Checkmates and tactics to train your eye.</small></span><span class="tag" id="pzTag">Train</span></button>
     </div>
@@ -314,6 +318,14 @@ button.avatar { cursor: pointer }
       <div class="card" id="lobbyCard" hidden>
         <h3>Play a classmate</h3>
         <p class="note" id="lobbyNote">Connecting to the lobby…</p>
+        <div class="roombox" id="roomBox" hidden>
+          <div id="roomSetup" class="roombox">
+            <div class="row"><label class="label" for="roomName">Your name</label><input class="inp" id="roomName" maxlength="16" autocomplete="off"></div>
+            <div class="row"><button class="btn primary" id="roomCreate">Create a room</button></div>
+            <div class="row"><input class="inp" id="roomCode" maxlength="5" placeholder="Room code" autocomplete="off" aria-label="Room code"><button class="btn" id="roomJoin">Join room</button></div>
+          </div>
+          <div id="roomLive" hidden><span class="label">Room code</span><div class="roomcode" id="roomShow"></div><p class="note" id="roomHint"></p></div>
+        </div>
         <div class="row" id="lobbyActions" hidden><button class="btn primary" id="createBtn">Create a game</button></div>
         <div class="list" id="gameList"></div>
       </div>
@@ -903,7 +915,7 @@ button.avatar { cursor: pointer }
     $('gameTitle').textContent = mode === 'bot' ? 'You vs ' + BOTS[botLevel].name : mode === 'local' ? 'Pass & play' : mode === 'online' ? 'Online game' : 'Puzzle';
     $('puzzleCard').hidden = mode !== 'puzzle' || !!review;
     if (mode === 'puzzle') renderPuzzleCard();
-    renderHome();
+    renderHome(); renderRooms();
     $('reviewBtn').hidden = !finished || game.moves.length < 2 || !!review;
     $('reviewCard').hidden = !review; $('rvBar').hidden = !review; $('boardCol').classList.toggle('reviewing', !!review);
     $('botCard').hidden = mode !== 'bot' || !!review;
@@ -1518,6 +1530,14 @@ button.avatar { cursor: pointer }
     render(); renderLobby();
   }
   function pushMove() {
+    if (og.p2p) {
+      const rec = game.moves[game.moves.length - 1];
+      og.data.moves.push(rec.uci);
+      try { rtc.conn.send({ t: 'move', uci: rec.uci, n: game.moves.length - 1 }); } catch (e) { toast('That move did not send. Check your connection.'); }
+      const st0 = game.status();
+      if (st0.over) roomFinish(st0.result, st0.reason);
+      return;
+    }
     const upd = { moves: game.moves.map(m => m.uci) }, st = game.status();
     if (st.over) { upd.status = 'done'; upd.result = st.result; upd.reason = st.reason; }
     const g = og;
@@ -1526,16 +1546,117 @@ button.avatar { cursor: pointer }
   function onlineMain() {
     if (!og) return;
     const st = og.data && og.data.status, g = og;
+    if (og.p2p) {
+      if (st === 'active') { try { rtc.conn.send({ t: 'resign' }); } catch (e) {} roomFinish(myColor === 'w' ? '0-1' : '1-0', 'resignation'); }
+      else { closeOnline(); render(); }
+      return;
+    }
     if (st === 'open') { g.ref.delete().catch(() => {}); closeOnline(); render(); }
     else if (st === 'active') g.q = g.q.then(() => g.ref.update({ status: 'done', result: myColor === 'w' ? '0-1' : '1-0', reason: 'resignation' })).catch(() => toast('Could not resign. Check your connection.'));
     else { closeOnline(); render(); }
   }
   $('createBtn').onclick = () => { audio(); createGame(); };
 
+  /* ---------- room codes: two browsers connect directly (used where there is no shared lobby) ---------- */
+  let roomsOn = false, rtc = null;
+  const ROOM = 'classroom-chess-room-';
+  const num = (v, lo, hi, d) => { v = Number(v); return v >= lo && v <= hi ? v : d; };
+  function loadPeer() {
+    return new Promise((res, rej) => {
+      if (window.Peer) return res();
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js';
+      sc.onload = () => res(); sc.onerror = () => rej();
+      document.head.appendChild(sc);
+    });
+  }
+  function myRoomName() { const n = $('roomName').value.trim().slice(0, 16); prefs.name = n; store.set('cc-prefs', prefs); return n || 'Classmate'; }
+  function startRoom(code, host) {
+    closeOnline(); newGame();
+    myId = 'me';
+    og = { id: 'room-' + code + '-' + Date.now(), p2p: true, code, host, data: { w: null, b: null, status: 'open', moves: [] } };
+    og.unsub = () => { try { if (rtc) rtc.peer.destroy(); } catch (e) {} rtc = null; };
+    return og;
+  }
+  function roomFail(mine, msg) { if (og !== mine) return; toast(msg); if (og.data.status !== 'active') { closeOnline(); render(); } }
+  async function createRoom() {
+    audio();
+    try { await loadPeer(); } catch (e) { return toast('Could not reach the connection service. It may be blocked on this network.'); }
+    const code = Array.from({ length: 5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random() * 24)]).join('');
+    const mine = startRoom(code, true), color = Math.random() < 0.5 ? 'w' : 'b';
+    mine.data[color] = 'me'; mine.hostColor = color; myColor = color; flipped = color === 'b';
+    const peer = new Peer(ROOM + code); rtc = { peer, conn: null };
+    peer.on('error', e => roomFail(mine, e.type === 'unavailable-id' ? 'That room code is already in use. Try again.' : 'Could not open a room. The connection may be blocked on this network.'));
+    peer.on('connection', conn => { if (og !== mine || rtc.conn) return conn.close(); rtc.conn = conn; wire(conn, mine); });
+    render();
+  }
+  async function joinRoom() {
+    audio();
+    const code = $('roomCode').value.trim().toUpperCase();
+    if (code.length < 5) return toast('Type the five-letter room code first.');
+    try { await loadPeer(); } catch (e) { return toast('Could not reach the connection service. It may be blocked on this network.'); }
+    const mine = startRoom(code, false), peer = new Peer(); rtc = { peer, conn: null };
+    peer.on('error', e => roomFail(mine, e.type === 'peer-unavailable' ? 'No room with that code was found.' : 'Could not connect. The connection may be blocked on this network.'));
+    peer.on('open', () => { if (og !== mine) return; const conn = peer.connect(ROOM + code, { reliable: true }); rtc.conn = conn; wire(conn, mine); });
+    render();
+  }
+  function wire(conn, mine) {
+    conn.on('open', () => { if (og === mine && !mine.host) conn.send({ t: 'hello', elo: profile.elo, rd: profile.rd, name: myRoomName() }); });
+    conn.on('data', msg => { if (og === mine && msg && typeof msg === 'object') roomMsg(msg, conn); });
+    conn.on('close', () => {
+      if (og !== mine || mine.data.status !== 'active') return;
+      mine.data.status = 'done'; finished = true; endInfo = { title: 'Your opponent disconnected. This game was not rated.' };
+      toast('Your opponent disconnected.'); render();
+    });
+  }
+  function setOpp(color, msg) {
+    og.data[color] = 'opp'; og.data[color + 'Elo'] = num(msg.elo, 100, 4000, 300); og.data[color + 'Rd'] = num(msg.rd, 50, 350, 200);
+    names.opp = String(msg.name || 'Classmate').slice(0, 16);
+  }
+  function roomMsg(msg, conn) {
+    const d = og.data;
+    if (msg.t === 'hello' && og.host && d.status === 'open') {
+      setOpp(og.hostColor === 'w' ? 'b' : 'w', msg);
+      d[og.hostColor + 'Elo'] = profile.elo; d.status = 'active';
+      conn.send({ t: 'start', hostColor: og.hostColor, elo: profile.elo, rd: profile.rd, name: myRoomName() });
+      sfx.start(); render();
+    } else if (msg.t === 'start' && !og.host && d.status === 'open' && (msg.hostColor === 'w' || msg.hostColor === 'b')) {
+      setOpp(msg.hostColor, msg);
+      myColor = msg.hostColor === 'w' ? 'b' : 'w'; flipped = myColor === 'b';
+      d[myColor] = 'me'; d[myColor + 'Elo'] = profile.elo; d.status = 'active';
+      sfx.start(); render();
+    } else if (msg.t === 'move' && d.status === 'active' && game.s.turn !== myColor && msg.n === game.moves.length) {
+      const m = game.legal().find(x => E.uci(x) === msg.uci);
+      if (!m) return;
+      d.moves.push(msg.uci); commit(m, true, true);
+      const st = game.status();
+      if (st.over) roomFinish(st.result, st.reason);
+    } else if (msg.t === 'resign' && d.status === 'active') roomFinish(myColor === 'w' ? '1-0' : '0-1', 'resignation');
+  }
+  function roomFinish(result, reason) {
+    const o = myColor === 'w' ? 'b' : 'w';
+    og.data.status = 'done';
+    finish(result, reason, { elo: og.data[o + 'Elo'] || 300, rd: og.data[o + 'Rd'] || 200 });
+    render();
+  }
+  function renderRooms() {
+    $('roomBox').hidden = !roomsOn;
+    if (!roomsOn) return;
+    const live = !!(og && og.p2p);
+    $('roomSetup').hidden = live; $('roomLive').hidden = !live; $('lobbyNote').hidden = live;
+    if (live) {
+      $('roomShow').textContent = og.code;
+      $('roomHint').textContent = og.data.status === 'open' ? (og.host ? 'Tell your classmate this code. The game starts when they join.' : 'Connecting to the room…') : og.data.status === 'active' ? 'Game in progress.' : 'Game over. Go back to the lobby to play again.';
+    }
+  }
+  $('roomCreate').onclick = createRoom;
+  $('roomJoin').onclick = joinRoom;
+  $('roomCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+
   async function connect() {
     const offline = msg => { $('lobbyNote').textContent = msg; $('lobbyNote').hidden = false; };
     const c = window.claude;
-    if (!c || !c.use) return offline('Online games are not available in this view. You can still play the computer or pass and play.');
+    if (!c || !c.use) { roomsOn = true; $('lobbyNote').textContent = 'Create a room and tell a classmate the code, or type their code to join. Games are rated.'; $('roomName').value = prefs.name || ''; return render(); }
     [db, user] = await Promise.all([c.use('db'), c.use('user')]);
     myId = user ? await user.id() : null;
     if (!db || !myId) { db = null; return offline('Sign in to Claude to see the class ladder and play classmates online. You can still play the computer or pass and play.'); }
