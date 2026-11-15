@@ -195,6 +195,12 @@ button.avatar { cursor: pointer }
 #roomCode { text-transform: uppercase; letter-spacing: .15em; font-weight: 600 }
 .roombox { display: flex; flex-direction: column; gap: 10px }
 .roomcode { font: 700 26px var(--display); letter-spacing: .18em; color: var(--accent) }
+.admin { display: flex; flex-direction: column; gap: 10px }
+.admin > b { font: 700 13px var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-top: 4px }
+.swatch { width: 38px; height: 38px; border-radius: 8px; border: 2px solid var(--line); padding: 0; overflow: hidden; display: grid; grid-template: 1fr 1fr / 1fr 1fr }
+.swatch[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) }
+.swatch i { display: block }
+.namebtn { max-width: 11em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .note { color: var(--muted); font-size: 13.5px; margin: 0 }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; z-index: 30; max-width: calc(100% - 32px) }
 </style>
@@ -211,13 +217,15 @@ button.avatar { cursor: pointer }
     </nav>
     <div class="spacer"></div>
     <div class="chip" title="Your rating"><small>Your rating</small><b id="myElo">300</b><small id="myRec">0W 0L 0D</small></div>
+    <button class="icon-btn namebtn" id="nameBtn" aria-label="Change your name"></button>
+    <button class="icon-btn" id="adminBtn" hidden>Admin</button>
     <button class="icon-btn" id="soundBtn" aria-pressed="true">Sound on</button>
   </header>
 
   <section class="home" id="homeScreen">
     <div class="hero">
       <div>
-        <h2>Your move.</h2>
+        <h2 id="heroTitle">Your move.</h2>
         <p>Play the computer, challenge a classmate, or sharpen up with puzzles. Every game can be reviewed with a coach afterwards.</p>
         <div class="row"><button class="btn primary big" data-go="bot">Play now</button><button class="btn ghost big" data-go="puzzle">Solve a puzzle</button></div>
       </div>
@@ -320,7 +328,7 @@ button.avatar { cursor: pointer }
         <p class="note" id="lobbyNote">Connecting to the lobby…</p>
         <div class="roombox" id="roomBox" hidden>
           <div id="roomSetup" class="roombox">
-            <div class="row"><label class="label" for="roomName">Your name</label><input class="inp" id="roomName" maxlength="16" autocomplete="off"></div>
+            
             <div class="row"><button class="btn primary" id="roomCreate">Create a room</button></div>
             <div class="row"><input class="inp" id="roomCode" maxlength="5" placeholder="Room code" autocomplete="off" aria-label="Room code"><button class="btn" id="roomJoin">Join room</button></div>
           </div>
@@ -342,6 +350,44 @@ button.avatar { cursor: pointer }
 <div class="modal" id="coachModal" hidden>
   <div class="card"><h3>Pick your coach</h3><p class="note">These are original characters inspired by the playing styles of famous players. Their lines are made up, not real quotes.</p>
     <div class="coaches" id="coaches"></div><div class="row"><button class="btn" id="coachClose">Close</button></div></div>
+</div>
+<div class="modal" id="nameModal" hidden>
+  <form class="card" id="nameForm">
+    <h3 id="nameHead">Welcome to Classroom Chess</h3>
+    <p class="note">What should other players call you? This is the name your opponents see.</p>
+    <input class="inp" id="nameInput" maxlength="16" autocomplete="off" aria-label="Your name" placeholder="Your name">
+    <p class="note msg-bad" id="nameErr" hidden>Type a name first.</p>
+    <div class="row"><button class="btn primary" type="submit" id="nameSave">Start playing</button><button class="btn" type="button" id="nameCancel">Cancel</button></div>
+  </form>
+</div>
+<div class="modal" id="adminModal" hidden>
+  <div class="card admin">
+    <h3>Admin</h3>
+    <form class="admin" id="adminLock">
+      <p class="note">Type your admin code to unlock admin on this device.</p>
+      <input class="inp" id="adminCode" type="password" autocomplete="off" aria-label="Admin code">
+      <p class="note msg-bad" id="adminErr" hidden></p>
+      <div class="row"><button class="btn primary" type="submit">Unlock</button><button class="btn" type="button" data-close-admin>Close</button></div>
+    </form>
+    <div class="admin" id="adminBody" hidden>
+      <p class="note" id="adminScope">These tools change things on this device only.</p>
+      <b>Your rating</b>
+      <div class="row"><input class="inp" id="adSetElo" type="number" min="100" max="3000" aria-label="New rating"><button class="btn" id="adSaveElo">Set rating</button><button class="btn" id="adResetMe">Reset my stats</button></div>
+      <b>Puzzles</b>
+      <div class="row"><button class="btn" id="adPzAll">Mark all solved</button><button class="btn" id="adPzReset">Reset puzzle progress</button></div>
+      <b>Powers</b>
+      <div class="row"><button class="btn" id="adArrow" aria-pressed="false"></button><button class="btn" id="adWin">Win this computer game</button></div>
+      <p class="note">Show best move draws a blue arrow in computer, pass and play and puzzle games. It never works in games against classmates.</p>
+      <b>Board colours</b>
+      <div class="row" id="adThemes"></div>
+      <div class="admin" id="adShared" hidden>
+        <b>Class ladder (everyone sees this)</b>
+        <div class="list" id="adLadder"></div>
+        <div class="row"><button class="btn" id="adClearGames">Delete unfinished online games</button></div>
+      </div>
+      <div class="row"><button class="btn" id="adLockBtn">Lock admin on this device</button><button class="btn primary" data-close-admin>Close</button></div>
+    </div>
+  </div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -721,6 +767,16 @@ button.avatar { cursor: pointer }
   let mode = 'bot', myColor = 'w', flipped = false, selected = -1, lastMove = null;
   let finished = false, thinking = false, botTimer = 0, drag = null, endInfo = null;
   let review = null, reviewToken = 0;
+  const ADMIN_HASH = 'dd7ee760ac043fb45203d43fe2599aa9177603cd108fb8cd77a3071c6356f288';
+  let admin = store.get('cc-admin', false) === true, amOwner = false, hintCache = { key: '', m: null };
+  const BOARD_THEMES = [
+    { id: 'lagoon', name: 'Lagoon', light: '', dark: '' },
+    { id: 'meadow', name: 'Meadow', light: '#e8edd5', dark: '#6f9a52' },
+    { id: 'walnut', name: 'Walnut', light: '#ecd5b0', dark: '#a8794f' },
+    { id: 'ice', name: 'Ice', light: '#e6eef5', dark: '#7d9bb8' },
+    { id: 'grape', name: 'Grape', light: '#ece3f2', dark: '#8a6aa8' },
+    { id: 'coral', name: 'Coral', light: '#f6e2d7', dark: '#c97a63' }
+  ];
   const PUZZLES = {"m1":[{"t":"m1","f":"5k1r/p1N2p1p/3r1p2/3p4/1Q6/5P2/PPP2P1P/R3K1R1 w Q - 5 20"},{"t":"m1","f":"3k1r2/2Rb3p/p4p2/5Q2/5P2/2N5/2PK1PPP/2B2B1R w - - 2 20"},{"t":"m1","f":"r1b1k2r/ppQ1bpp1/3p3p/3N4/3N3P/8/PP3KP1/R4B1R w - - 1 14"},{"t":"m1","f":"r4rk1/pppbnp1p/8/3P4/2Pp3q/P2p4/1P1R1PP1/4K3 b - - 1 21"},{"t":"m1","f":"2b2rk1/1p3ppp/2n1p3/6r1/P7/8/2q5/K7 b - - 0 25"},{"t":"m1","f":"r1bk4/p1pp2Qp/1pn1p3/6N1/8/4P3/PPPP2PP/RNB1KB1R w KQ - 3 12"},{"t":"m1","f":"r5k1/1pp2p2/6p1/3pp3/p1P4p/3P1r2/QP3q2/R6K b - - 1 61"},{"t":"m1","f":"2k5/8/3Q4/8/P3P3/3B4/1PP3PP/R4K1R w - - 3 40"},{"t":"m1","f":"3kr3/r7/p2pp3/2p5/3q1P2/P3Q3/6PP/5BKR b - - 3 34"},{"t":"m1","f":"7k/1p3Q2/8/p3N3/8/3P4/PP1B1P2/R3KB2 w Q - 1 25"},{"t":"m1","f":"rnb1k3/pp1p1pp1/8/2P3b1/P3n3/2P3P1/4r3/RK6 b q a3 0 17"},{"t":"m1","f":"7k/p4Q2/4B2p/8/8/2P5/PPP2PPP/R1B1K2R w KQ - 1 21"},{"t":"m1","f":"r3k2r/1pp2ppp/8/p1bPp1q1/P2n2b1/3P4/RPPN1PPP/2B1KB1R b Kkq - 2 11"},{"t":"m1","f":"r1b3k1/pp1n1rpp/8/5p2/3P4/PqN4P/5PP1/n1K2B1R b - - 2 21"}],"m2":[{"t":"m2","f":"2bqk3/1pp2p2/8/4n2r/r4b1P/2p5/2P1K3/7n b - - 0 22"},{"t":"m2","f":"2b2rk1/1p3ppp/2n1p3/2r3P1/8/P7/1KP1q3/8 b - - 0 23"},{"t":"m2","f":"r5k1/1pp2p2/6p1/3pp3/p1Pq3p/3P1r2/QP3R2/R5K1 b - c3 0 60"},{"t":"m2","f":"3kr3/r7/p2pp3/2p5/5P2/PQ6/6PP/q4BKR b - - 1 33"},{"t":"m2","f":"8/1p2Qp1k/8/p3N3/8/3P4/PP1B1P2/R3KB2 w Q - 7 24"},{"t":"m2","f":"6k1/pQ3p2/4B2p/8/8/2P5/PPP2PPP/R1B1K2R w KQ - 1 20"},{"t":"m2","f":"8/R4ppk/4b1p1/2P1n3/p3p3/8/r7/6K1 b - - 11 53"},{"t":"m2","f":"r2r2k1/2q5/8/pQ1n1p2/P2p2p1/1P1P2Pb/3R1P1P/6K1 b - - 22 61"},{"t":"m2","f":"5R1N/1p1bk1p1/3p3p/8/3P4/4B1P1/2P2P1P/3Q1RK1 w - - 1 23"},{"t":"m2","f":"2k4r/1pp2ppp/8/3bb3/5n2/6K1/2r5/8 b - - 3 29"},{"t":"m2","f":"6k1/pp3p2/3r2n1/4n3/2p1P2p/P6P/2P2P1P/6KR b - - 1 22"},{"t":"m2","f":"3r2k1/ppp2r2/4p2p/1P6/N3B3/P3Q3/6PP/6KR b - - 0 33"},{"t":"m2","f":"1r4k1/p1p5/nr1p1Q2/1p1P4/1PnR4/P3P1PP/1q3P2/R5K1 w - - 7 48"},{"t":"m2","f":"8/7Q/1p3Rpp/7k/2B5/5P1P/3P1PP1/4K2R w K - 0 24"}],"win":[{"t":"win","f":"r4rk1/pppqbppp/3pNn2/4p3/4P3/2NP1n1P/PPPQKP2/R1B2B1R b - - 2 14","s":"f3d2"},{"t":"win","f":"r1bqk2r/p1p1b2p/5p2/3Qnp2/RP6/2N1PN2/2P2PPP/2B1KB1R w Kkq - 1 11","s":"d5a8"},{"t":"win","f":"r1bqkb1r/ppp2ppp/3p4/4p1B1/7P/2NP4/PPQ1NKP1/R4B1R w kq e6 0 9","s":"g5d8"},{"t":"win","f":"r1b2rk1/ppp1np1p/3qpp2/8/3P4/P6P/1PPQPPPR/2R1KB2 b - - 2 13","s":"d6h2"},{"t":"win","f":"r1bqk1nr/1p3ppp/2n1p3/p2p4/1b6/1P1P1NP1/PBPQPP1P/R3KB1R b KQkq - 2 8","s":"b4d2"},{"t":"win","f":"r5k1/1pp2p2/5rp1/3pp3/p2q3p/3P1B2/QPP2R2/R5K1 b - - 7 59","s":"f6f3"},{"t":"win","f":"r1bk1bnr/1ppq1Qpp/2n1p3/1p4N1/3pP3/PP1B4/2PP1PPP/R1B1K2R w KQ - 1 11","s":"f7f8"},{"t":"win","f":"3kr3/r3p3/p2p4/2p5/5P2/P1q5/6PP/R3QBKR b - - 3 30","s":"c3d4"},{"t":"win","f":"r2k1b1r/pp1b1p1p/3p1n2/4p1B1/3P4/N5P1/PPP1NPBP/R3K2R w KQ - 2 14","s":"g5f6"},{"t":"win","f":"1k6/2r5/p7/8/P1R5/8/2P2P1P/K7 b - - 4 33","s":"c7c4"},{"t":"win","f":"r1bq1b1r/ppp1npp1/3pk2p/3Np3/2BP4/4PN2/R1P2PPP/2BQ1RK1 w - - 4 11","s":"d5c7"},{"t":"win","f":"rn3rk1/pp3p2/2p3n1/1B5p/4P3/2P4P/P1P2P1P/R2K3R b - - 4 13","s":"c6b5"},{"t":"win","f":"r1bqkb1r/p1ppn2p/8/1p2Q1p1/4P3/2N5/PPP1N1PP/R1B1KB1R w KQkq - 0 11","s":"e5h8"},{"t":"win","f":"3r2k1/ppp2rb1/1q2p2p/1P1pB3/N2Pn3/P2B1P2/3Q2PP/4R1KR w - - 12 29","s":"f3e4"}]};
   const THEMES = [
     { id: 'm1', name: 'Mate in 1', goal: 'Find checkmate in one move.' },
@@ -834,6 +890,16 @@ button.avatar { cursor: pointer }
       piecesEl.appendChild(el);
       if (from >= 0) { el.getBoundingClientRect(); el.classList.add('slide'); el.style.transform = pos(sq); }
     }
+    if (admin && prefs.adArrow && !review && !finished && mode !== 'online' && canMove()) {
+      const key = E.toFen(game.s);
+      if (hintCache.key !== key) {
+        let m = null;
+        if (mode === 'puzzle') m = game.legal().find(puzzleOk) || null;
+        else { const r = E.search(game.s, 2, 2); m = r ? r.move : null; }
+        hintCache = { key, m };
+      }
+      if (hintCache.m) piecesEl.appendChild(arrowSvg(hintCache.m.from, hintCache.m.to, 'rgba(48,118,222,.85)'));
+    }
     if (review && review.ready && review.idx > 0) drawReviewMarks();
   }
 
@@ -849,7 +915,7 @@ button.avatar { cursor: pointer }
   const names = {};
   function sideInfo(color) {
     if (mode === 'local' || mode === 'puzzle') return { name: color === 'w' ? 'White' : 'Black', elo: '' };
-    if (mode === 'bot') return color === myColor ? { name: 'You', elo: profile.elo } : { name: BOTS[botLevel].name, elo: BOTS[botLevel].elo };
+    if (mode === 'bot') return color === myColor ? { name: prefs.name || 'You', elo: profile.elo } : { name: BOTS[botLevel].name, elo: BOTS[botLevel].elo };
     const d = og && og.data;
     if (!d) return { name: color === 'w' ? 'White' : 'Black', elo: '' };
     const id = d[color];
@@ -1570,7 +1636,7 @@ button.avatar { cursor: pointer }
       document.head.appendChild(sc);
     });
   }
-  function myRoomName() { const n = $('roomName').value.trim().slice(0, 16); prefs.name = n; store.set('cc-prefs', prefs); return n || 'Classmate'; }
+  function myRoomName() { return prefs.name || 'Classmate'; }
   function startRoom(code, host) {
     closeOnline(); newGame();
     myId = 'me';
@@ -1656,8 +1722,10 @@ button.avatar { cursor: pointer }
   async function connect() {
     const offline = msg => { $('lobbyNote').textContent = msg; $('lobbyNote').hidden = false; };
     const c = window.claude;
-    if (!c || !c.use) { roomsOn = true; $('lobbyNote').textContent = 'Create a room and tell a classmate the code, or type their code to join. Games are rated.'; $('roomName').value = prefs.name || ''; return render(); }
+    if (!c || !c.use) { roomsOn = true; $('lobbyNote').textContent = 'Create a room and tell a classmate the code, or type their code to join. Games are rated.'; return render(); }
     [db, user] = await Promise.all([c.use('db'), c.use('user')]);
+    amOwner = user ? await user.isOwner() : false;
+    if (amOwner) { admin = true; paintAdmin(); }
     myId = user ? await user.id() : null;
     if (!db || !myId) { db = null; return offline('Sign in to Claude to see the class ladder and play classmates online. You can still play the computer or pass and play.'); }
     const can = await user.can('data.write');
@@ -1679,7 +1747,144 @@ button.avatar { cursor: pointer }
     render();
   }
 
+  /* ---------- name ---------- */
+  function paintName() {
+    $('nameBtn').textContent = prefs.name || 'Set name';
+    $('heroTitle').textContent = prefs.name ? 'Your move, ' + prefs.name + '.' : 'Your move.';
+  }
+  function askName() {
+    const first = !prefs.name;
+    $('nameHead').textContent = first ? 'Welcome to Classroom Chess' : 'Change your name';
+    $('nameSave').textContent = first ? 'Start playing' : 'Save';
+    $('nameCancel').hidden = first;
+    $('nameErr').hidden = true;
+    $('nameInput').value = prefs.name || '';
+    $('nameModal').hidden = false;
+    setTimeout(() => $('nameInput').focus(), 30);
+  }
+  $('nameForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const n = $('nameInput').value.replace(/\s+/g, ' ').trim().slice(0, 16);
+    if (!n) { $('nameErr').hidden = false; return; }
+    prefs.name = n; store.set('cc-prefs', prefs);
+    $('nameModal').hidden = true; paintName(); render();
+  });
+  $('nameCancel').onclick = () => { $('nameModal').hidden = true; };
+  $('nameBtn').onclick = askName;
+
+  /* ---------- admin ---------- */
+  function arrowSvg(from, to, color) {
+    const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 8 8'); svg.setAttribute('class', 'arrow');
+    const c = sq => { const i = toSq(sq); return [(i & 7) + 0.5, (i >> 3) + 0.5]; };
+    const [x1, y1] = c(from), [x2, y2] = c(to), len = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+    const bx = x2 - ux * 0.42, by = y2 - uy * 0.42;
+    const line = document.createElementNS(NS, 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', bx); line.setAttribute('y2', by);
+    line.setAttribute('stroke', color); line.setAttribute('stroke-width', '0.17'); line.setAttribute('stroke-linecap', 'round');
+    const head = document.createElementNS(NS, 'polygon');
+    head.setAttribute('points', [[x2 - ux * 0.08, y2 - uy * 0.08], [bx - uy * 0.24, by + ux * 0.24], [bx + uy * 0.24, by - ux * 0.24]].map(q => q.join(',')).join(' '));
+    head.setAttribute('fill', color);
+    svg.append(line, head);
+    return svg;
+  }
+  function applyTheme() {
+    const t = BOARD_THEMES.find(x => x.id === prefs.boardTheme) || BOARD_THEMES[0], st = document.documentElement.style;
+    if (t.light) { st.setProperty('--sq-light', t.light); st.setProperty('--sq-dark', t.dark); }
+    else { st.removeProperty('--sq-light'); st.removeProperty('--sq-dark'); }
+  }
+  function armed(btn, label, fn) {
+    if (btn.dataset.arm) { delete btn.dataset.arm; btn.textContent = label; fn(); return; }
+    btn.dataset.arm = '1'; btn.textContent = 'Click again to confirm';
+    setTimeout(() => { if (btn.dataset.arm) { delete btn.dataset.arm; btn.textContent = label; } }, 3000);
+  }
+  function paintAdmin() {
+    $('adminBtn').hidden = !admin;
+    if ($('adminModal').hidden) return;
+    $('adminLock').hidden = admin; $('adminBody').hidden = !admin;
+    if (!admin) return;
+    $('adSetElo').value = profile.elo;
+    $('adArrow').textContent = 'Show best move: ' + (prefs.adArrow ? 'on' : 'off');
+    $('adArrow').setAttribute('aria-pressed', !!prefs.adArrow);
+    $('adLockBtn').hidden = amOwner;
+    const box = $('adThemes');
+    if (!box.children.length) BOARD_THEMES.forEach(t => {
+      const b = document.createElement('button'); b.className = 'swatch'; b.dataset.t = t.id; b.title = t.name; b.setAttribute('aria-label', t.name + ' board');
+      for (let i = 0; i < 4; i++) { const q = document.createElement('i'); q.style.background = (i === 0 || i === 3) ? (t.light || 'var(--sq-light)') : (t.dark || 'var(--sq-dark)'); b.appendChild(q); }
+      if (!t.light) { b.firstChild.style.background = '#ece6d6'; b.lastChild.style.background = '#ece6d6'; b.children[1].style.background = '#5b8790'; b.children[2].style.background = '#5b8790'; }
+      b.onclick = () => { prefs.boardTheme = t.id; store.set('cc-prefs', prefs); applyTheme(); paintAdmin(); };
+      box.appendChild(b);
+    });
+    box.querySelectorAll('.swatch').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === (prefs.boardTheme || 'lagoon')));
+    const shared = amOwner && !!db;
+    $('adShared').hidden = !shared;
+    $('adminScope').textContent = shared ? 'Everything except the class ladder only changes this device.' : 'These tools change things on this device only.';
+    if (shared) {
+      const el = $('adLadder'); el.textContent = '';
+      if (!ladderRows.length) { const n = document.createElement('p'); n.className = 'note'; n.textContent = 'No one is on the ladder yet.'; el.appendChild(n); }
+      ladderRows.forEach(r => {
+        const it = document.createElement('div'); it.className = 'item';
+        const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = (r.id === myId ? 'You' : (names[r.id] || 'Classmate')) + ' (' + r.elo + ')';
+        const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Remove';
+        b.onclick = () => armed(b, 'Remove', () => db.doc('players/' + r.id).delete().then(() => toast('Removed from the ladder.')).catch(() => toast('Could not remove that player.')));
+        it.append(nm, b); el.appendChild(it);
+      });
+    }
+  }
+  function openAdmin() { $('adminModal').hidden = false; $('adminErr').hidden = true; paintAdmin(); if (!admin) setTimeout(() => $('adminCode').focus(), 30); }
+  async function sha256(t) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+    return Array.from(new Uint8Array(buf)).map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+  $('adminLock').addEventListener('submit', async e => {
+    e.preventDefault();
+    const err = msg => { $('adminErr').textContent = msg; $('adminErr').hidden = false; };
+    let h = '';
+    try { h = await sha256($('adminCode').value.trim().toLowerCase()); }
+    catch (x) { return err('This browser cannot check the code here. Open the site from its web link instead.'); }
+    if (h !== ADMIN_HASH) return err('That code is not right.');
+    admin = true; store.set('cc-admin', true); $('adminCode').value = '';
+    toast('Admin unlocked on this device.'); paintAdmin(); render();
+  });
+  document.querySelectorAll('[data-close-admin]').forEach(b => b.onclick = () => { $('adminModal').hidden = true; });
+  $('adminModal').onclick = e => { if (e.target === $('adminModal')) $('adminModal').hidden = true; };
+  $('adminBtn').onclick = openAdmin;
+  $('adSaveElo').onclick = () => {
+    const v = Math.round(Number($('adSetElo').value));
+    if (!(v >= 100 && v <= 3000)) return toast('Pick a rating between 100 and 3000.');
+    profile.elo = v; saveProfile(); render(); toast('Rating set to ' + v + '.');
+  };
+  $('adResetMe').onclick = () => armed($('adResetMe'), 'Reset my stats', () => {
+    profile = Object.assign({}, FRESH); saveProfile(); render(); paintAdmin(); toast('Your stats are back to the start.');
+  });
+  $('adPzAll').onclick = () => {
+    THEMES.forEach(t => PUZZLES[t.id].forEach((_, k) => { pz.done[t.id + k] = 1; }));
+    savePz(); render(); toast('All puzzles marked solved.');
+  };
+  $('adPzReset').onclick = () => armed($('adPzReset'), 'Reset puzzle progress', () => {
+    pz = { theme: pz.theme, done: {}, streak: 0, best: 0 }; savePz();
+    if (mode === 'puzzle') loadPuzzle(pz.theme); else render();
+    toast('Puzzle progress reset.');
+  });
+  $('adArrow').onclick = () => { prefs.adArrow = !prefs.adArrow; store.set('cc-prefs', prefs); hintCache = { key: '', m: null }; paintAdmin(); render(); };
+  $('adWin').onclick = () => {
+    if (mode !== 'bot' || !inProgress()) return toast('Start a game against the computer first.');
+    $('adminModal').hidden = true; show('game');
+    finish(myColor === 'w' ? '1-0' : '0-1', 'admin powers');
+  };
+  $('adClearGames').onclick = () => armed($('adClearGames'), 'Delete unfinished online games', () => {
+    const doomed = lobbyRows.filter(g => g.status === 'open' || g.status === 'active');
+    if (!doomed.length) return toast('There are no unfinished online games.');
+    Promise.all(doomed.map(g => db.doc('games/' + g.id).delete())).then(() => toast('Deleted ' + doomed.length + ' unfinished games.')).catch(() => toast('Some games could not be deleted.'));
+  });
+  $('adLockBtn').onclick = () => { admin = false; prefs.adArrow = false; store.set('cc-prefs', prefs); store.set('cc-admin', false); $('adminModal').hidden = true; paintAdmin(); render(); toast('Admin locked on this device.'); };
+  const checkHash = () => { if (location.hash === '#admin') openAdmin(); };
+  window.addEventListener('hashchange', checkHash);
+
+  applyTheme(); paintName(); paintAdmin();
   paintSound(); paintColorSeg(); newGame(); connect();
+  if (!prefs.name) askName();
+  checkHash();
 })();
 </script>
 </body></html>
