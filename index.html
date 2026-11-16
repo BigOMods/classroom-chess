@@ -1681,14 +1681,31 @@ button.avatar { cursor: pointer }
   /* Rooms: a free public message relay (ntfy.sh) introduces the two players and carries the game
      if nothing better works; once matched, the browsers try a direct WebRTC link and use that instead. */
   const RELAY = 'https://ntfy.sh/', RELAY_WS = 'wss://ntfy.sh/';
+  const NOSTR_RELAYS = ['wss://nos.lol', 'wss://relay.primal.net', 'wss://nostr.mom', 'wss://relay.nostr.net', 'wss://nostr.oxtr.dev', 'wss://offchain.pub', 'wss://relay.damus.io'];
+  const NOSTR_KIND = 25050;
+  const NOSTR_SRC = ['https://cdn.jsdelivr.net/npm/nostr-tools@2.7.2/lib/nostr.bundle.js', 'https://unpkg.com/nostr-tools@2.7.2/lib/nostr.bundle.js'];
   const ICE = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' }];
   const rid = () => Math.random().toString(36).slice(2, 12);
+  let nostrLoad = null;
+  function loadNostr() {
+    if (window.NostrTools) return Promise.resolve(true);
+    if (!nostrLoad) nostrLoad = (async () => {
+      for (const src of NOSTR_SRC) {
+        if (window.NostrTools) break;
+        try {
+          await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = () => { sc.remove(); rej(); }; document.head.appendChild(sc); });
+        } catch (e) {}
+      }
+      return !!window.NostrTools;
+    })();
+    return nostrLoad;
+  }
   function myRoomName() { return prefs.name || 'Classmate'; }
   function startRoom(code, host) {
     closeOnline(); newGame();
     myId = 'me';
     const room = { id: 'room-' + code + '-' + Date.now(), p2p: true, code, host, me: rid(), topic: 'classroomchess-' + code.toLowerCase(),
-      data: { w: null, b: null, status: 'open', moves: [] } };
+      data: { w: null, b: null, status: 'open', moves: [] }, nostr: [], seen: new Set(), tries: {} };
     room.unsub = () => leaveRoom(room);
     og = room;
     return room;
@@ -1699,25 +1716,65 @@ button.avatar { cursor: pointer }
     if (og.data.status !== 'active') { closeOnline(); render(); roomErr(msg); }
     else toast(msg);
   }
-  function relayPost(room, msg) {
-    msg.from = room.me;
-    return fetch(RELAY + room.topic, { method: 'POST', body: JSON.stringify(msg) }).then(r => { if (!r.ok) throw new Error('relay ' + r.status); });
+  function linkUp(room) { return (room.ws && room.ws.readyState === 1) || room.nostr.some(c => c.up); }
+  function ready(room) { if (room.onReady) { const f = room.onReady; room.onReady = null; f(); } }
+  function gotRaw(room, text) {
+    let msg; try { msg = JSON.parse(text); } catch (e) { return; }
+    if (!msg || typeof msg !== 'object' || typeof msg.mid !== 'string') return;
+    if (room.seen.has(msg.mid)) return;
+    room.seen.add(msg.mid);
+    incoming(room, msg);
   }
-  function relayListen(room) {
+  function nostrFrame(room, body) {
+    if (!window.NostrTools || !room.sk) return null;
+    const ev = window.NostrTools.finalizeEvent({ kind: NOSTR_KIND, created_at: Math.floor(Date.now() / 1000), tags: [['t', room.topic]], content: body }, room.sk);
+    return JSON.stringify(['EVENT', ev]);
+  }
+  function relayPost(room, msg) {
+    msg.from = room.me; msg.mid = msg.mid || rid();
+    const body = JSON.stringify(msg), frame = nostrFrame(room, body);
+    let sent = 0;
+    if (frame) room.nostr.forEach(c => { if (c.up) { try { c.ws.send(frame); sent++; } catch (e) {} } });
+    const viaNtfy = fetch(RELAY + room.topic, { method: 'POST', body }).then(r => { if (!r.ok) throw new Error('relay ' + r.status); });
+    return sent ? viaNtfy.catch(() => {}) : viaNtfy;
+  }
+  function openNtfy(room) {
     if (og !== room || room.closed) return;
     let ws;
-    try { ws = new WebSocket(RELAY_WS + room.topic + '/ws' + (room.lastId ? '?since=' + encodeURIComponent(room.lastId) : '')); }
-    catch (e) { return roomFail(room, 'Could not reach the room service. This network may block it.'); }
+    try { ws = new WebSocket(RELAY_WS + room.topic + '/ws' + (room.lastId ? '?since=' + encodeURIComponent(room.lastId) : '')); } catch (e) { return; }
     room.ws = ws;
     ws.onmessage = ev => {
       let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
-      if (m.event === 'open') { if (room.onReady) { const f = room.onReady; room.onReady = null; f(); } return; }
+      if (m.event === 'open') return ready(room);
       if (m.event !== 'message') return;
       room.lastId = m.id;
-      let msg; try { msg = JSON.parse(m.message); } catch (e) { return; }
-      incoming(room, msg);
+      gotRaw(room, m.message);
     };
-    ws.onclose = () => { if (room.ws === ws) room.ws = null; if (og === room && !room.closed) setTimeout(() => relayListen(room), 2000); };
+    ws.onclose = () => { if (room.ws === ws) room.ws = null; if (og === room && !room.closed) setTimeout(() => openNtfy(room), 3000); };
+  }
+  function openRelay(room, url) {
+    if (og !== room || room.closed) return;
+    let ws; try { ws = new WebSocket(url); } catch (e) { return; }
+    const ch = { ws, up: false, url };
+    room.nostr.push(ch);
+    ws.onopen = () => {
+      ch.up = true; room.tries[url] = 0;
+      ws.send(JSON.stringify(['REQ', 'cc', { kinds: [NOSTR_KIND], '#t': [room.topic], since: Math.floor(Date.now() / 1000) - 60 }]));
+      ready(room);
+    };
+    ws.onmessage = ev => { let d; try { d = JSON.parse(ev.data); } catch (e) { return; } if (d[0] === 'EVENT' && d[2] && typeof d[2].content === 'string') gotRaw(room, d[2].content); };
+    ws.onclose = () => {
+      ch.up = false; room.nostr = room.nostr.filter(x => x !== ch);
+      room.tries[url] = (room.tries[url] || 0) + 1;
+      if (og === room && !room.closed && room.tries[url] < 4) setTimeout(() => openRelay(room, url), 3000 * room.tries[url]);
+    };
+    ws.onerror = () => {};
+  }
+  async function relayListen(room) {
+    openNtfy(room);
+    if (!(await loadNostr()) || og !== room || room.closed) return;
+    room.sk = window.NostrTools.generateSecretKey();
+    NOSTR_RELAYS.forEach(url => openRelay(room, url));
   }
   function incoming(room, msg) {
     if (og !== room || room.closed || !msg || typeof msg !== 'object' || msg.from === room.me) return;
@@ -1726,7 +1783,7 @@ button.avatar { cursor: pointer }
   }
   function rtcSend(room, msg) {
     if (room.dc && room.dc.readyState === 'open') {
-      try { msg.from = room.me; room.dc.send(JSON.stringify(msg)); return; } catch (e) {}
+      try { msg.from = room.me; msg.mid = rid(); room.dc.send(JSON.stringify(msg)); return; } catch (e) {}
     }
     relayPost(room, msg).catch(() => toast('A move did not send. Check your connection.'));
   }
@@ -1772,18 +1829,19 @@ button.avatar { cursor: pointer }
   }
   function leaveRoom(room) {
     if (room.closed) return;
-    const st = room.data.status;
-    if (st === 'active') {
+    if (room.data.status === 'active') {
       const o = myColor === 'w' ? 'b' : 'w';
       room.data.status = 'done';
       applyElo({ elo: room.data[o + 'Elo'] || 300, rd: room.data[o + 'Rd'] || 200 }, 0);
       toast('You left the game, so it counts as a loss.');
-      const bye = JSON.stringify({ t: 'bye', from: room.me });
-      try { if (room.dc && room.dc.readyState === 'open') room.dc.send(bye); } catch (e) {}
-      try { if (navigator.sendBeacon) navigator.sendBeacon(RELAY + room.topic, bye); else fetch(RELAY + room.topic, { method: 'POST', body: bye, keepalive: true }); } catch (e) {}
-    } else if (st === 'open' && room.host && room.posted) relayPost(room, { t: 'closed' }).catch(() => {});
+      const bye = { t: 'bye', from: room.me, mid: rid() }, body = JSON.stringify(bye), frame = nostrFrame(room, body);
+      try { if (room.dc && room.dc.readyState === 'open') room.dc.send(body); } catch (e) {}
+      if (frame) room.nostr.forEach(c => { if (c.up) { try { c.ws.send(frame); } catch (e) {} } });
+      try { if (navigator.sendBeacon) navigator.sendBeacon(RELAY + room.topic, body); else fetch(RELAY + room.topic, { method: 'POST', body, keepalive: true }); } catch (e) {}
+    }
     room.closed = true;
     try { if (room.ws) room.ws.close(); } catch (e) {}
+    room.nostr.forEach(c => { try { c.ws.close(); } catch (e) {} });
     try { if (room.pc) room.pc.close(); } catch (e) {}
   }
   window.addEventListener('pagehide', () => { if (og && og.p2p) leaveRoom(og); });
@@ -1803,15 +1861,9 @@ button.avatar { cursor: pointer }
       if (room.pingId !== id) return;
       room.pingId = null;
       if (og !== room || room.data.status !== 'active') return;
-      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 5000);
-      fetch(RELAY + 'v1/health', { signal: ctl.signal, cache: 'no-store' })
-        .then(r => { clearTimeout(t); if (!r.ok) throw new Error('health'); win(); })
-        .catch(() => {
-          clearTimeout(t);
-          if (og !== room || room.data.status !== 'active') return;
-          room.data.status = 'done'; finished = true; endInfo = { title: 'You lost your connection. This game was not rated.' };
-          toast('You lost your connection.'); render();
-        });
+      if (navigator.onLine !== false && linkUp(room)) return win();
+      room.data.status = 'done'; finished = true; endInfo = { title: 'You lost your connection. This game was not rated.' };
+      toast('You lost your connection.'); render();
     }, 8000);
   }
   function createRoom() {
@@ -1820,30 +1872,22 @@ button.avatar { cursor: pointer }
     const mine = startRoom(code, true), color = Math.random() < 0.5 ? 'w' : 'b';
     mine.data[color] = 'me'; mine.hostColor = color; myColor = color; flipped = color === 'b';
     mine.connecting = true; render();
-    mine.onReady = () => relayPost(mine, { t: 'room', ts: Date.now() })
-      .then(() => { if (og !== mine) return; mine.posted = true; mine.connecting = false; render(); })
-      .catch(() => roomFail(mine, 'Could not open a room. The room service did not answer.'));
+    mine.onReady = () => { if (og !== mine) return; mine.connecting = false; render(); };
     relayListen(mine);
-    setTimeout(() => { if (og === mine && mine.connecting) roomFail(mine, 'Could not open a room. This network may block the room service.'); }, 12000);
+    setTimeout(() => { if (og === mine && mine.connecting) roomFail(mine, 'Could not open a room. This network may block the room services.'); }, 15000);
   }
-  async function joinRoom() {
+  function joinRoom() {
     audio(); roomErr('');
     const code = $('roomCode').value.replace(/[^a-z]/gi, '').toUpperCase();
     if (code.length !== 5) return roomErr('Type the five-letter room code first.');
     const mine = startRoom(code, false); mine.connecting = true; render();
-    let state = null;
-    try {
-      const txt = await fetch(RELAY + mine.topic + '/json?poll=1&since=3h').then(r => { if (!r.ok) throw new Error('poll'); return r.text(); });
-      txt.split('\n').forEach(line => {
-        try { const m = JSON.parse(line); if (m.event !== 'message') return; const msg = JSON.parse(m.message); if (['room', 'closed', 'start', 'offer', 'answer', 'move', 'bye'].includes(msg.t)) state = msg.t; } catch (e) {}
-      });
-    } catch (e) { return roomFail(mine, 'Could not reach the room service. This network may block it.'); }
-    if (og !== mine) return;
-    if (state !== 'room') return roomFail(mine, 'No open room with code ' + code + '. Check the code, and that your classmate still has the room open.');
-    mine.onReady = () => relayPost(mine, { t: 'hello', elo: profile.elo, rd: profile.rd, name: myRoomName() })
-      .catch(() => roomFail(mine, 'Could not join. The room service did not answer.'));
+    const hello = () => { if (og === mine && mine.data.status === 'open') relayPost(mine, { t: 'hello', elo: profile.elo, rd: profile.rd, name: myRoomName() }).catch(() => {}); };
+    mine.onReady = () => { [1500, 4500, 8000].forEach(ms => setTimeout(hello, ms)); };
     relayListen(mine);
-    setTimeout(() => { if (og === mine && mine.data.status === 'open') roomFail(mine, 'The room did not answer. Your classmate may have left, so ask them to make a new room.'); }, 15000);
+    setTimeout(() => {
+      if (og !== mine || mine.data.status !== 'open') return;
+      roomFail(mine, linkUp(mine) ? 'No room with code ' + code + ' answered. Check the code, and that your classmate still has the room open.' : 'Could not reach the room services. This network may block them.');
+    }, 15000);
   }
   function setOpp(color, msg) {
     og.data[color] = 'opp'; og.data[color + 'Elo'] = num(msg.elo, 100, 4000, 300); og.data[color + 'Rd'] = num(msg.rd, 50, 350, 200);
@@ -1851,11 +1895,13 @@ button.avatar { cursor: pointer }
   }
   function roomMsg(msg, room) {
     const d = room.data;
-    if (msg.t === 'hello' && room.host && d.status === 'open' && !room.opp) {
+    if (msg.t === 'hello' && room.host && room.opp === msg.from && d.status === 'active' && game.moves.length === 0 && room.startMsg) {
+      const again = Object.assign({}, room.startMsg); delete again.mid; relayPost(room, again).catch(() => {});
+    } else if (msg.t === 'hello' && room.host && d.status === 'open' && !room.opp) {
       room.opp = msg.from;
       setOpp(room.hostColor === 'w' ? 'b' : 'w', msg);
       d[room.hostColor + 'Elo'] = profile.elo; d.status = 'active';
-      relayPost(room, { t: 'start', to: msg.from, hostColor: room.hostColor, elo: profile.elo, rd: profile.rd, name: myRoomName() })
+      relayPost(room, room.startMsg = { t: 'start', to: msg.from, hostColor: room.hostColor, elo: profile.elo, rd: profile.rd, name: myRoomName() })
         .then(() => hostOffer(room)).catch(() => toast('Could not start the game. Check your connection.'));
       sfx.start(); render();
     } else if (msg.t === 'start' && !room.host && msg.to === room.me && d.status === 'open' && (msg.hostColor === 'w' || msg.hostColor === 'b')) {
