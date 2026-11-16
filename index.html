@@ -289,10 +289,12 @@ button.avatar { cursor: pointer }
       <div class="card">
         <h3 id="gameTitle">Game</h3>
         <div class="status" id="status" aria-live="polite">Your move.</div>
+        <div class="row" id="drawAsk" hidden><span class="label" id="drawAskTxt"></span><button class="btn primary" id="drawYes">Accept draw</button><button class="btn" id="drawNo">Decline</button></div>
         <div class="moves" id="moves"></div>
         <div class="row">
           <button class="btn primary" id="mainBtn">New game</button>
           <button class="btn" id="reviewBtn" hidden>Review game</button>
+          <button class="btn" id="drawBtn" hidden>Offer draw</button>
           <button class="btn" id="undoBtn">Undo</button>
           <button class="btn" id="flipBtn">Flip board</button>
         </div>
@@ -383,10 +385,10 @@ button.avatar { cursor: pointer }
       <div class="row"><button class="btn" id="adPzAll">Mark all solved</button><button class="btn" id="adPzReset">Reset puzzle progress</button></div>
       <b>Powers</b>
       <div class="row"><button class="btn" id="adArrow" aria-pressed="false"></button><button class="btn" id="adWin">Win this computer game</button></div>
-      <p class="note">Show best move draws a blue arrow in computer, pass and play and puzzle games. It never works in games against classmates.</p>
+      <p class="note">Show best move draws a blue arrow in computer, pass and play and puzzle games. It works in every game, including games against classmates.</p>
       <b>More powers</b>
       <div class="row"><button class="btn" id="adEval"></button><button class="btn" id="adFast"></button><button class="btn" id="adUndo">Take back a move</button></div>
-      <p class="note">The evaluation bar shows who is ahead during computer, pass and play and puzzle games. Fast bots move almost instantly. Take back undoes your last move against the computer.</p>
+      <p class="note">The evaluation bar shows who is ahead in every game, including games against classmates. Fast bots move almost instantly. Take back undoes your last move against the computer.</p>
       <b>Positions</b>
       <div class="row"><input class="inp" id="adFen" autocomplete="off" spellcheck="false" placeholder="Paste a FEN position" aria-label="Position in FEN"><button class="btn" id="adFenGo">Play from this position</button></div>
       <div class="row"><button class="btn" id="adCopy">Copy this game</button></div>
@@ -786,6 +788,7 @@ button.avatar { cursor: pointer }
   let finished = false, thinking = false, botTimer = 0, drag = null, endInfo = null;
   let review = null, reviewToken = 0;
   const ADMIN_HASH = 'dd7ee760ac043fb45203d43fe2599aa9177603cd108fb8cd77a3071c6356f288';
+  let drawSentAt = -1, drawIncoming = -1, leaveArmed = 0;
   let admin = store.get('cc-admin', false) === true, amOwner = false, hintCache = { key: '', m: null };
   const BOARD_THEMES = [
     { id: 'lagoon', name: 'Lagoon', light: '#ece6d6', dark: '#5b8790', base: true },
@@ -912,8 +915,8 @@ button.avatar { cursor: pointer }
       piecesEl.appendChild(el);
       if (from >= 0) { el.getBoundingClientRect(); el.classList.add('slide'); el.style.transform = pos(sq); }
     }
-    const wantArrow = admin && prefs.adArrow && !review && !finished && mode !== 'online' && canMove();
-    const wantEval = admin && prefs.adEval && !review && mode !== 'online';
+    const wantArrow = admin && prefs.adArrow && !review && !finished && canMove();
+    const wantEval = admin && prefs.adEval && !review;
     if (wantArrow || wantEval) {
       const key = E.toFen(game.s);
       if (hintCache.key !== key) {
@@ -1008,6 +1011,15 @@ button.avatar { cursor: pointer }
       main.textContent = mode === 'bot' && inProgress() ? 'Resign' : 'New game';
     }
     $('undoBtn').hidden = mode !== 'local';
+    const roomLive = mode === 'online' && og && og.data && og.data.status === 'active';
+    const drawOk = !finished && !review && ((mode === 'bot' && inProgress()) || (mode === 'local' && game.moves.length > 0) || roomLive);
+    const sent = drawSentAt === game.moves.length;
+    $('drawBtn').hidden = !drawOk;
+    $('drawBtn').disabled = mode !== 'local' && sent;
+    if (!$('drawBtn').dataset.arm) $('drawBtn').textContent = mode === 'local' ? 'Agree a draw' : sent ? 'Draw offered' : 'Offer draw';
+    const asked = drawOk && roomLive && drawIncoming === game.moves.length;
+    $('drawAsk').hidden = !asked;
+    if (asked) $('drawAskTxt').textContent = sideInfo(myColor === 'w' ? 'b' : 'w').name + ' offers a draw.';
     $('undoBtn').disabled = !game.moves.length;
     $('gameTitle').textContent = mode === 'bot' ? 'You vs ' + BOTS[botLevel].name : mode === 'local' ? 'Pass & play' : mode === 'online' ? 'Online game' : 'Puzzle';
     $('puzzleCard').hidden = mode !== 'puzzle' || !!review;
@@ -1147,6 +1159,7 @@ button.avatar { cursor: pointer }
 
   let botLevel = prefs.bot;
   function newGame() {
+    drawSentAt = drawIncoming = -1;
     if (mode === 'puzzle') return loadPuzzle(pz.theme);
     puzzle = null;
     clearTimeout(botTimer); thinking = false; finished = false; endInfo = null; selected = -1; lastMove = null; review = null; reviewToken++;
@@ -1162,6 +1175,10 @@ button.avatar { cursor: pointer }
   }
   function setMode(m) {
     if (m === mode) return;
+    if (mode === 'online' && og && og.p2p && og.data.status === 'active' && !(leaveArmed && Date.now() - leaveArmed < 4000)) {
+      leaveArmed = Date.now(); toast('Leaving now counts as a loss. Click again to leave.'); return;
+    }
+    leaveArmed = 0;
     if (mode === 'online') closeOnline();
     mode = m;
     newGame();
@@ -1604,6 +1621,8 @@ button.avatar { cursor: pointer }
     if (!snap.exists) { closeOnline(); render(); return toast('That game was cancelled.'); }
     const d = snap.data(), first = !og.data;
     og.data = d;
+    const dLen = (d.moves || []).length, myCol = d.b === myId ? 'b' : 'w';
+    drawIncoming = d.status === 'active' && d.drawOffer && d.drawOffer !== myCol && d.drawAt === dLen ? dLen : -1;
     myColor = d.b === myId ? 'b' : 'w';
     if (first) { flipped = myColor === 'b'; if (d.status === 'active') sfx.start(); }
     resolveNames([d.w, d.b]).then(renderStrips);
@@ -1636,7 +1655,7 @@ button.avatar { cursor: pointer }
       if (st0.over) roomFinish(st0.result, st0.reason);
       return;
     }
-    const upd = { moves: game.moves.map(m => m.uci) }, st = game.status();
+    const upd = { moves: game.moves.map(m => m.uci), drawOffer: null }, st = game.status();
     if (st.over) { upd.status = 'done'; upd.result = st.result; upd.reason = st.reason; }
     const g = og;
     g.q = g.q.then(() => g.ref.update(upd)).catch(() => toast('That move did not send. Check your connection.'));
@@ -1755,6 +1774,10 @@ button.avatar { cursor: pointer }
     if (room.closed) return;
     const st = room.data.status;
     if (st === 'active') {
+      const o = myColor === 'w' ? 'b' : 'w';
+      room.data.status = 'done';
+      applyElo({ elo: room.data[o + 'Elo'] || 300, rd: room.data[o + 'Rd'] || 200 }, 0);
+      toast('You left the game, so it counts as a loss.');
       const bye = JSON.stringify({ t: 'bye', from: room.me });
       try { if (room.dc && room.dc.readyState === 'open') room.dc.send(bye); } catch (e) {}
       try { if (navigator.sendBeacon) navigator.sendBeacon(RELAY + room.topic, bye); else fetch(RELAY + room.topic, { method: 'POST', body: bye, keepalive: true }); } catch (e) {}
@@ -1765,10 +1788,31 @@ button.avatar { cursor: pointer }
   }
   window.addEventListener('pagehide', () => { if (og && og.p2p) leaveRoom(og); });
   window.ccRoomStatus = () => (og && og.p2p ? { link: og.dc ? og.dc.readyState : 'relay', peer: og.pc ? og.pc.connectionState : 'none', ice: og.pc ? og.pc.iceConnectionState : 'none' } : null);
-  function oppGone(room) {
+  function oppGone(room, sure) {
     if (og !== room || room.data.status !== 'active') return;
-    room.data.status = 'done'; finished = true; endInfo = { title: 'Your opponent left or lost their connection. This game was not rated.' };
-    toast('Your opponent left or lost their connection.'); render();
+    const win = () => {
+      if (og !== room || room.data.status !== 'active') return;
+      toast('Your opponent left the game.');
+      roomFinish(myColor === 'w' ? '1-0' : '0-1', 'abandonment');
+    };
+    if (sure) return win();
+    if (room.pingId) return;
+    const id = rid(); room.pingId = id;
+    relayPost(room, { t: 'ping', id }).catch(() => {});
+    setTimeout(() => {
+      if (room.pingId !== id) return;
+      room.pingId = null;
+      if (og !== room || room.data.status !== 'active') return;
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 5000);
+      fetch(RELAY + 'v1/health', { signal: ctl.signal, cache: 'no-store' })
+        .then(r => { clearTimeout(t); if (!r.ok) throw new Error('health'); win(); })
+        .catch(() => {
+          clearTimeout(t);
+          if (og !== room || room.data.status !== 'active') return;
+          room.data.status = 'done'; finished = true; endInfo = { title: 'You lost your connection. This game was not rated.' };
+          toast('You lost your connection.'); render();
+        });
+    }, 8000);
   }
   function createRoom() {
     audio(); roomErr('');
@@ -1830,7 +1874,12 @@ button.avatar { cursor: pointer }
       const st = game.status();
       if (st.over) roomFinish(st.result, st.reason);
     } else if (msg.t === 'resign' && d.status === 'active') roomFinish(myColor === 'w' ? '1-0' : '0-1', 'resignation');
-    else if (msg.t === 'bye') oppGone(room);
+    else if (msg.t === 'bye') oppGone(room, true);
+    else if (msg.t === 'ping' && typeof msg.id === 'string') relayPost(room, { t: 'pong', id: msg.id.slice(0, 20) }).catch(() => {});
+    else if (msg.t === 'pong' && msg.id === room.pingId) room.pingId = null;
+    else if (msg.t === 'draw-offer' && d.status === 'active' && msg.n === game.moves.length) { drawIncoming = game.moves.length; toast(names.opp + ' offers a draw.'); render(); }
+    else if (msg.t === 'draw-accept' && d.status === 'active' && drawSentAt === game.moves.length && msg.n === game.moves.length) roomFinish('1/2-1/2', 'agreement');
+    else if (msg.t === 'draw-decline' && drawSentAt === game.moves.length) toast(names.opp + ' declined the draw.');
   }
   function roomFinish(result, reason) {
     const o = myColor === 'w' ? 'b' : 'w';
@@ -2091,6 +2140,33 @@ button.avatar { cursor: pointer }
     ['cc-profile', 'cc-prefs', 'cc-puzzles', 'cc-applied', 'cc-admin'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
     location.reload();
   });
+  $('drawBtn').onclick = () => {
+    audio();
+    if (mode === 'local') return armed($('drawBtn'), 'Agree a draw', () => finish('1/2-1/2', 'agreement'));
+    if (drawSentAt === game.moves.length) return;
+    drawSentAt = game.moves.length;
+    if (mode === 'bot') {
+      const r = E.search(game.s, 2, 2), botScore = r ? (game.s.turn === myColor ? -r.score : r.score) : 0;
+      if (botScore <= 30) { toast(BOTS[botLevel].name + ' accepts the draw.'); finish('1/2-1/2', 'agreement'); }
+      else { toast(BOTS[botLevel].name + ' declines the draw.'); renderStatus(); }
+      return;
+    }
+    if (og && og.p2p) rtcSend(og, { t: 'draw-offer', n: game.moves.length });
+    else if (og) { const g = og, n = game.moves.length; g.q = g.q.then(() => g.ref.update({ drawOffer: myColor, drawAt: n })).catch(() => toast('Could not offer a draw. Check your connection.')); }
+    toast('Draw offered.'); renderStatus();
+  };
+  $('drawYes').onclick = () => {
+    if (!og || drawIncoming !== game.moves.length) return;
+    if (og.p2p) { rtcSend(og, { t: 'draw-accept', n: game.moves.length }); roomFinish('1/2-1/2', 'agreement'); }
+    else { const g = og; g.q = g.q.then(() => g.ref.update({ status: 'done', result: '1/2-1/2', reason: 'agreement', drawOffer: null })).catch(() => toast('Could not accept. Check your connection.')); }
+    drawIncoming = -1; renderStatus();
+  };
+  $('drawNo').onclick = () => {
+    if (!og) return;
+    if (og.p2p) rtcSend(og, { t: 'draw-decline' });
+    else { const g = og; g.q = g.q.then(() => g.ref.update({ drawOffer: null })).catch(() => {}); }
+    drawIncoming = -1; renderStatus();
+  };
   const checkHash = () => { if (location.hash === '#admin') openAdmin(); };
   window.addEventListener('hashchange', checkHash);
 
