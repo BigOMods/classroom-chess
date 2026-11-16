@@ -1600,7 +1600,7 @@ button.avatar { cursor: pointer }
     if (og.p2p) {
       const rec = game.moves[game.moves.length - 1];
       og.data.moves.push(rec.uci);
-      try { rtc.conn.send({ t: 'move', uci: rec.uci, n: game.moves.length - 1 }); } catch (e) { toast('That move did not send. Check your connection.'); }
+      rtcSend(og, { t: 'move', uci: rec.uci, n: game.moves.length - 1 });
       const st0 = game.status();
       if (st0.over) roomFinish(st0.result, st0.reason);
       return;
@@ -1614,7 +1614,7 @@ button.avatar { cursor: pointer }
     if (!og) return;
     const st = og.data && og.data.status, g = og;
     if (og.p2p) {
-      if (st === 'active') { try { rtc.conn.send({ t: 'resign' }); } catch (e) {} roomFinish(myColor === 'w' ? '0-1' : '1-0', 'resignation'); }
+      if (st === 'active') { rtcSend(og, { t: 'resign' }); roomFinish(myColor === 'w' ? '0-1' : '1-0', 'resignation'); }
       else { closeOnline(); render(); }
       return;
     }
@@ -1628,31 +1628,20 @@ button.avatar { cursor: pointer }
   let roomsOn = false, rtc = null;
   const ROOM = 'classroom-chess-room-';
   const num = (v, lo, hi, d) => { v = Number(v); return v >= lo && v <= hi ? v : d; };
-  const PEER_SRC = [
-    'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js',
-    'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js',
-    'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'
-  ];
-  async function loadPeer() {
-    for (const src of PEER_SRC) {
-      if (window.Peer) return;
-      try {
-        await new Promise((res, rej) => {
-          const sc = document.createElement('script'); sc.src = src;
-          sc.onload = res; sc.onerror = () => { sc.remove(); rej(); };
-          document.head.appendChild(sc);
-        });
-      } catch (e) {}
-    }
-    if (!window.Peer) throw new Error('blocked');
-  }
+  /* Rooms: a free public message relay (ntfy.sh) introduces the two players and carries the game
+     if nothing better works; once matched, the browsers try a direct WebRTC link and use that instead. */
+  const RELAY = 'https://ntfy.sh/', RELAY_WS = 'wss://ntfy.sh/';
+  const ICE = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' }];
+  const rid = () => Math.random().toString(36).slice(2, 12);
   function myRoomName() { return prefs.name || 'Classmate'; }
   function startRoom(code, host) {
     closeOnline(); newGame();
     myId = 'me';
-    og = { id: 'room-' + code + '-' + Date.now(), p2p: true, code, host, data: { w: null, b: null, status: 'open', moves: [] } };
-    og.unsub = () => { try { if (rtc && rtc.peer) rtc.peer.destroy(); } catch (e) {} rtc = null; };
-    return og;
+    const room = { id: 'room-' + code + '-' + Date.now(), p2p: true, code, host, me: rid(), topic: 'classroomchess-' + code.toLowerCase(),
+      data: { w: null, b: null, status: 'open', moves: [] } };
+    room.unsub = () => leaveRoom(room);
+    og = room;
+    return room;
   }
   function roomErr(msg) { $('roomErr').textContent = msg || ''; $('roomErr').hidden = !msg; }
   function roomFail(mine, msg) {
@@ -1660,83 +1649,149 @@ button.avatar { cursor: pointer }
     if (og.data.status !== 'active') { closeOnline(); render(); roomErr(msg); }
     else toast(msg);
   }
-  const RETRY = ['network', 'server-error', 'socket-error', 'socket-closed'];
-  const why = e => ' (reason: ' + ((e && e.type) || 'unknown') + ')';
-  function openPeer(id, mine, tries) {
-    return new Promise((res, rej) => {
-      let opened = false, peer;
-      try { peer = id ? new Peer(id) : new Peer(); } catch (e) { return rej({ type: 'browser-incompatible' }); }
-      peer.on('open', () => { opened = true; res(peer); });
-      peer.on('error', e => {
-        if (opened) return;
-        try { peer.destroy(); } catch (x) {}
-        if (og === mine && RETRY.includes(e.type) && tries > 1) setTimeout(() => { if (og === mine) openPeer(id, mine, tries - 1).then(res, rej); else rej(e); }, 1500);
-        else rej(e);
-      });
+  function relayPost(room, msg) {
+    msg.from = room.me;
+    return fetch(RELAY + room.topic, { method: 'POST', body: JSON.stringify(msg) }).then(r => { if (!r.ok) throw new Error('relay ' + r.status); });
+  }
+  function relayListen(room) {
+    if (og !== room || room.closed) return;
+    let ws;
+    try { ws = new WebSocket(RELAY_WS + room.topic + '/ws' + (room.lastId ? '?since=' + encodeURIComponent(room.lastId) : '')); }
+    catch (e) { return roomFail(room, 'Could not reach the room service. This network may block it.'); }
+    room.ws = ws;
+    ws.onmessage = ev => {
+      let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+      if (m.event === 'open') { if (room.onReady) { const f = room.onReady; room.onReady = null; f(); } return; }
+      if (m.event !== 'message') return;
+      room.lastId = m.id;
+      let msg; try { msg = JSON.parse(m.message); } catch (e) { return; }
+      incoming(room, msg);
+    };
+    ws.onclose = () => { if (room.ws === ws) room.ws = null; if (og === room && !room.closed) setTimeout(() => relayListen(room), 2000); };
+  }
+  function incoming(room, msg) {
+    if (og !== room || room.closed || !msg || typeof msg !== 'object' || msg.from === room.me) return;
+    if (room.opp && msg.from !== room.opp) return;
+    roomMsg(msg, room);
+  }
+  function rtcSend(room, msg) {
+    if (room.dc && room.dc.readyState === 'open') {
+      try { msg.from = room.me; room.dc.send(JSON.stringify(msg)); return; } catch (e) {}
+    }
+    relayPost(room, msg).catch(() => toast('A move did not send. Check your connection.'));
+  }
+  function wireDc(room, dc) {
+    dc.onopen = () => { if (og === room) room.dc = dc; };
+    dc.onmessage = ev => { let msg; try { msg = JSON.parse(ev.data); } catch (e) { return; } incoming(room, msg); };
+    dc.onclose = () => { if (room.dc !== dc) return; room.dc = null; if (og === room && !room.closed) oppGone(room); };
+  }
+  function gathered(pc) {
+    return new Promise(res => {
+      if (pc.iceGatheringState === 'complete') return res();
+      const t = setTimeout(res, 2500);
+      pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') { clearTimeout(t); res(); } });
     });
   }
-  function keepAlive(peer, mine) {
-    peer.on('disconnected', () => { if (og === mine && !peer.destroyed) setTimeout(() => { try { peer.reconnect(); } catch (e) {} }, 1000); });
+  function watchPc(room, pc) {
+    let timer = 0;
+    pc.addEventListener('connectionstatechange', () => {
+      const st = pc.connectionState;
+      clearTimeout(timer);
+      if (st === 'failed' || st === 'closed') { if (room.dc) oppGone(room); }
+      else if (st === 'disconnected') timer = setTimeout(() => { if (pc.connectionState !== 'connected') oppGone(room); }, 8000);
+    });
   }
-  async function createRoom() {
+  async function hostOffer(room) {
+    try {
+      const pc = new RTCPeerConnection({ iceServers: ICE }); room.pc = pc; watchPc(room, pc);
+      wireDc(room, pc.createDataChannel('chess', { ordered: true }));
+      await pc.setLocalDescription(await pc.createOffer()); await gathered(pc);
+      const sdp = pc.localDescription.sdp;
+      if (og === room && sdp.length < 3500) await relayPost(room, { t: 'offer', to: room.opp, sdp });
+    } catch (e) {}
+  }
+  async function joinAnswer(room, sdp) {
+    try {
+      const pc = new RTCPeerConnection({ iceServers: ICE }); room.pc = pc; watchPc(room, pc);
+      pc.ondatachannel = ev => wireDc(room, ev.channel);
+      await pc.setRemoteDescription({ type: 'offer', sdp });
+      await pc.setLocalDescription(await pc.createAnswer()); await gathered(pc);
+      const ans = pc.localDescription.sdp;
+      if (og === room && ans.length < 3500) await relayPost(room, { t: 'answer', to: room.opp, sdp: ans });
+    } catch (e) {}
+  }
+  function leaveRoom(room) {
+    if (room.closed) return;
+    const st = room.data.status;
+    if (st === 'active') {
+      const bye = JSON.stringify({ t: 'bye', from: room.me });
+      try { if (room.dc && room.dc.readyState === 'open') room.dc.send(bye); } catch (e) {}
+      try { if (navigator.sendBeacon) navigator.sendBeacon(RELAY + room.topic, bye); else fetch(RELAY + room.topic, { method: 'POST', body: bye, keepalive: true }); } catch (e) {}
+    } else if (st === 'open' && room.host && room.posted) relayPost(room, { t: 'closed' }).catch(() => {});
+    room.closed = true;
+    try { if (room.ws) room.ws.close(); } catch (e) {}
+    try { if (room.pc) room.pc.close(); } catch (e) {}
+  }
+  window.addEventListener('pagehide', () => { if (og && og.p2p) leaveRoom(og); });
+  window.ccRoomStatus = () => (og && og.p2p ? { link: og.dc ? og.dc.readyState : 'relay', peer: og.pc ? og.pc.connectionState : 'none', ice: og.pc ? og.pc.iceConnectionState : 'none' } : null);
+  function oppGone(room) {
+    if (og !== room || room.data.status !== 'active') return;
+    room.data.status = 'done'; finished = true; endInfo = { title: 'Your opponent left or lost their connection. This game was not rated.' };
+    toast('Your opponent left or lost their connection.'); render();
+  }
+  function createRoom() {
     audio(); roomErr('');
-    $('roomCreate').disabled = true;
-    try { await loadPeer(); } catch (e) { $('roomCreate').disabled = false; return roomErr('Could not load the room system. This network may block it.'); }
-    $('roomCreate').disabled = false;
     const code = Array.from({ length: 5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random() * 24)]).join('');
     const mine = startRoom(code, true), color = Math.random() < 0.5 ? 'w' : 'b';
     mine.data[color] = 'me'; mine.hostColor = color; myColor = color; flipped = color === 'b';
-    rtc = { peer: null, conn: null }; mine.connecting = true; render();
-    let peer;
-    try { peer = await openPeer(ROOM + code, mine, 3); }
-    catch (e) { return roomFail(mine, (e.type === 'unavailable-id' ? 'That room code was already taken. Press Create a room again.' : 'Could not open a room. This network may block online play.') + why(e)); }
-    if (og !== mine) { try { peer.destroy(); } catch (x) {} return; }
-    rtc.peer = peer; mine.connecting = false; keepAlive(peer, mine); render();
-    peer.on('error', e => { if (og === mine && mine.data.status === 'open' && e.type !== 'peer-unavailable') toast('Room connection problem' + why(e)); });
-    peer.on('connection', conn => { if (og !== mine || rtc.conn) return conn.close(); rtc.conn = conn; wire(conn, mine); });
+    mine.connecting = true; render();
+    mine.onReady = () => relayPost(mine, { t: 'room', ts: Date.now() })
+      .then(() => { if (og !== mine) return; mine.posted = true; mine.connecting = false; render(); })
+      .catch(() => roomFail(mine, 'Could not open a room. The room service did not answer.'));
+    relayListen(mine);
+    setTimeout(() => { if (og === mine && mine.connecting) roomFail(mine, 'Could not open a room. This network may block the room service.'); }, 12000);
   }
   async function joinRoom() {
     audio(); roomErr('');
-    const code = $('roomCode').value.trim().toUpperCase();
-    if (code.length < 5) return roomErr('Type the five-letter room code first.');
-    $('roomJoin').disabled = true;
-    try { await loadPeer(); } catch (e) { $('roomJoin').disabled = false; return roomErr('Could not load the room system. This network may block it.'); }
-    $('roomJoin').disabled = false;
-    const mine = startRoom(code, false); rtc = { peer: null, conn: null }; mine.connecting = true; render();
-    let peer;
-    try { peer = await openPeer(null, mine, 3); }
-    catch (e) { return roomFail(mine, 'Could not connect. This network may block online play.' + why(e)); }
-    if (og !== mine) { try { peer.destroy(); } catch (x) {} return; }
-    rtc.peer = peer; mine.connecting = false; keepAlive(peer, mine); render();
-    peer.on('error', e => roomFail(mine, e.type === 'peer-unavailable' ? 'No room with code ' + code + ' was found. Check the code, and that your classmate still has the room open.' : 'Lost the connection' + why(e)));
-    const conn = peer.connect(ROOM + code, { reliable: true }); rtc.conn = conn; wire(conn, mine);
-    setTimeout(() => { if (og === mine && mine.data.status === 'open') roomFail(mine, 'Found the room but could not link up with it. One of your networks may block direct connections. Try different wifi or mobile data.'); }, 20000);
-  }
-  function wire(conn, mine) {
-    conn.on('open', () => { if (og === mine && !mine.host) conn.send({ t: 'hello', elo: profile.elo, rd: profile.rd, name: myRoomName() }); });
-    conn.on('data', msg => { if (og === mine && msg && typeof msg === 'object') roomMsg(msg, conn); });
-    conn.on('close', () => {
-      if (og !== mine || mine.data.status !== 'active') return;
-      mine.data.status = 'done'; finished = true; endInfo = { title: 'Your opponent disconnected. This game was not rated.' };
-      toast('Your opponent disconnected.'); render();
-    });
+    const code = $('roomCode').value.replace(/[^a-z]/gi, '').toUpperCase();
+    if (code.length !== 5) return roomErr('Type the five-letter room code first.');
+    const mine = startRoom(code, false); mine.connecting = true; render();
+    let state = null;
+    try {
+      const txt = await fetch(RELAY + mine.topic + '/json?poll=1&since=3h').then(r => { if (!r.ok) throw new Error('poll'); return r.text(); });
+      txt.split('\n').forEach(line => {
+        try { const m = JSON.parse(line); if (m.event !== 'message') return; const msg = JSON.parse(m.message); if (['room', 'closed', 'start', 'offer', 'answer', 'move', 'bye'].includes(msg.t)) state = msg.t; } catch (e) {}
+      });
+    } catch (e) { return roomFail(mine, 'Could not reach the room service. This network may block it.'); }
+    if (og !== mine) return;
+    if (state !== 'room') return roomFail(mine, 'No open room with code ' + code + '. Check the code, and that your classmate still has the room open.');
+    mine.onReady = () => relayPost(mine, { t: 'hello', elo: profile.elo, rd: profile.rd, name: myRoomName() })
+      .catch(() => roomFail(mine, 'Could not join. The room service did not answer.'));
+    relayListen(mine);
+    setTimeout(() => { if (og === mine && mine.data.status === 'open') roomFail(mine, 'The room did not answer. Your classmate may have left, so ask them to make a new room.'); }, 15000);
   }
   function setOpp(color, msg) {
     og.data[color] = 'opp'; og.data[color + 'Elo'] = num(msg.elo, 100, 4000, 300); og.data[color + 'Rd'] = num(msg.rd, 50, 350, 200);
     names.opp = String(msg.name || 'Classmate').slice(0, 16);
   }
-  function roomMsg(msg, conn) {
-    const d = og.data;
-    if (msg.t === 'hello' && og.host && d.status === 'open') {
-      setOpp(og.hostColor === 'w' ? 'b' : 'w', msg);
-      d[og.hostColor + 'Elo'] = profile.elo; d.status = 'active';
-      conn.send({ t: 'start', hostColor: og.hostColor, elo: profile.elo, rd: profile.rd, name: myRoomName() });
+  function roomMsg(msg, room) {
+    const d = room.data;
+    if (msg.t === 'hello' && room.host && d.status === 'open' && !room.opp) {
+      room.opp = msg.from;
+      setOpp(room.hostColor === 'w' ? 'b' : 'w', msg);
+      d[room.hostColor + 'Elo'] = profile.elo; d.status = 'active';
+      relayPost(room, { t: 'start', to: msg.from, hostColor: room.hostColor, elo: profile.elo, rd: profile.rd, name: myRoomName() })
+        .then(() => hostOffer(room)).catch(() => toast('Could not start the game. Check your connection.'));
       sfx.start(); render();
-    } else if (msg.t === 'start' && !og.host && d.status === 'open' && (msg.hostColor === 'w' || msg.hostColor === 'b')) {
+    } else if (msg.t === 'start' && !room.host && msg.to === room.me && d.status === 'open' && (msg.hostColor === 'w' || msg.hostColor === 'b')) {
+      room.opp = msg.from; room.connecting = false;
       setOpp(msg.hostColor, msg);
       myColor = msg.hostColor === 'w' ? 'b' : 'w'; flipped = myColor === 'b';
       d[myColor] = 'me'; d[myColor + 'Elo'] = profile.elo; d.status = 'active';
       sfx.start(); render();
+    } else if (msg.t === 'offer' && !room.host && msg.to === room.me && typeof msg.sdp === 'string' && !room.pc) joinAnswer(room, msg.sdp);
+    else if (msg.t === 'answer' && room.host && msg.to === room.me && typeof msg.sdp === 'string' && room.pc && !room.pc.currentRemoteDescription) {
+      room.pc.setRemoteDescription({ type: 'answer', sdp: msg.sdp }).catch(() => {});
     } else if (msg.t === 'move' && d.status === 'active' && game.s.turn !== myColor && msg.n === game.moves.length) {
       const m = game.legal().find(x => E.uci(x) === msg.uci);
       if (!m) return;
@@ -1744,6 +1799,7 @@ button.avatar { cursor: pointer }
       const st = game.status();
       if (st.over) roomFinish(st.result, st.reason);
     } else if (msg.t === 'resign' && d.status === 'active') roomFinish(myColor === 'w' ? '1-0' : '0-1', 'resignation');
+    else if (msg.t === 'bye') oppGone(room);
   }
   function roomFinish(result, reason) {
     const o = myColor === 'w' ? 'b' : 'w';
