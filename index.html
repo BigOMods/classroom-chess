@@ -242,6 +242,10 @@ button.avatar { cursor: pointer }
       <span class="t"><small>Your game review coach</small><b id="hcName"></b><small id="hcTag"></small></span>
       <button class="btn" id="hcChange">Change coach</button>
     </div>
+    <div class="card coachcard">
+      <span class="t"><small>Board colours</small><b id="themeName"></b><small>Changes every board on this device.</small></span>
+      <div class="row" id="homeThemes"></div>
+    </div>
     <button class="btn primary big" id="continueBtn" hidden>Continue your game</button>
     <div class="modegrid">
       <button class="modecard" data-go="bot"><span class="g" aria-hidden="true">&#9822;&#xFE0E;</span><span class="t"><b>Play the computer</b><small>Fourteen opponents, from beginner to strong.</small></span><span class="tag">Practice</span></button>
@@ -278,6 +282,7 @@ button.avatar { cursor: pointer }
         </div>
       </div>
       <div class="strip" id="stripBot"><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="caps"></span></div>
+      <div class="evalbar" id="liveEval" hidden title="Who is ahead"><div id="liveEvalFill"></div><span id="liveEvalTxt"></span></div>
     </div>
 
     <div class="side">
@@ -379,8 +384,20 @@ button.avatar { cursor: pointer }
       <b>Powers</b>
       <div class="row"><button class="btn" id="adArrow" aria-pressed="false"></button><button class="btn" id="adWin">Win this computer game</button></div>
       <p class="note">Show best move draws a blue arrow in computer, pass and play and puzzle games. It never works in games against classmates.</p>
-      <b>Board colours</b>
-      <div class="row" id="adThemes"></div>
+      <b>More powers</b>
+      <div class="row"><button class="btn" id="adEval"></button><button class="btn" id="adFast"></button><button class="btn" id="adUndo">Take back a move</button></div>
+      <p class="note">The evaluation bar shows who is ahead during computer, pass and play and puzzle games. Fast bots move almost instantly. Take back undoes your last move against the computer.</p>
+      <b>Positions</b>
+      <div class="row"><input class="inp" id="adFen" autocomplete="off" spellcheck="false" placeholder="Paste a FEN position" aria-label="Position in FEN"><button class="btn" id="adFenGo">Play from this position</button></div>
+      <div class="row"><button class="btn" id="adCopy">Copy this game</button></div>
+      <textarea class="inp" id="adPgn" rows="4" readonly hidden aria-label="Game moves in PGN"></textarea>
+      <p class="note">Play from this position starts a computer game from any setup, written in FEN. Copy this game gives the moves in PGN, which other chess sites can import.</p>
+      <b>Fun</b>
+      <div class="row"><button class="btn" id="adParty"></button></div>
+      <p class="note">Party mode fires confetti when you win a game or solve a puzzle. While admin is on, two extra board colours, Gold and Neon, appear on the home screen.</p>
+      <b>This device</b>
+      <div class="row"><button class="btn" id="adWipe">Reset everything on this device</button></div>
+      <p class="note">This clears your name, rating, puzzles, settings and admin unlock on this device.</p>
       <div class="admin" id="adShared" hidden>
         <b>Class ladder (everyone sees this)</b>
         <div class="list" id="adLadder"></div>
@@ -771,12 +788,16 @@ button.avatar { cursor: pointer }
   const ADMIN_HASH = 'dd7ee760ac043fb45203d43fe2599aa9177603cd108fb8cd77a3071c6356f288';
   let admin = store.get('cc-admin', false) === true, amOwner = false, hintCache = { key: '', m: null };
   const BOARD_THEMES = [
-    { id: 'lagoon', name: 'Lagoon', light: '', dark: '' },
+    { id: 'lagoon', name: 'Lagoon', light: '#ece6d6', dark: '#5b8790', base: true },
     { id: 'meadow', name: 'Meadow', light: '#e8edd5', dark: '#6f9a52' },
     { id: 'walnut', name: 'Walnut', light: '#ecd5b0', dark: '#a8794f' },
     { id: 'ice', name: 'Ice', light: '#e6eef5', dark: '#7d9bb8' },
     { id: 'grape', name: 'Grape', light: '#ece3f2', dark: '#8a6aa8' },
-    { id: 'coral', name: 'Coral', light: '#f6e2d7', dark: '#c97a63' }
+    { id: 'coral', name: 'Coral', light: '#f6e2d7', dark: '#c97a63' },
+    { id: 'slate', name: 'Slate', light: '#dfe3e6', dark: '#6b7a86' },
+    { id: 'cherry', name: 'Cherry', light: '#f3dfe0', dark: '#b5525e' },
+    { id: 'gold', name: 'Gold', light: '#f7e7b4', dark: '#c79a2b', admin: true },
+    { id: 'neon', name: 'Neon', light: '#c9f7ff', dark: '#ff4fa3', admin: true }
   ];
   const PUZZLES = {"m1":[{"t":"m1","f":"5k1r/p1N2p1p/3r1p2/3p4/1Q6/5P2/PPP2P1P/R3K1R1 w Q - 5 20"},{"t":"m1","f":"3k1r2/2Rb3p/p4p2/5Q2/5P2/2N5/2PK1PPP/2B2B1R w - - 2 20"},{"t":"m1","f":"r1b1k2r/ppQ1bpp1/3p3p/3N4/3N3P/8/PP3KP1/R4B1R w - - 1 14"},{"t":"m1","f":"r4rk1/pppbnp1p/8/3P4/2Pp3q/P2p4/1P1R1PP1/4K3 b - - 1 21"},{"t":"m1","f":"2b2rk1/1p3ppp/2n1p3/6r1/P7/8/2q5/K7 b - - 0 25"},{"t":"m1","f":"r1bk4/p1pp2Qp/1pn1p3/6N1/8/4P3/PPPP2PP/RNB1KB1R w KQ - 3 12"},{"t":"m1","f":"r5k1/1pp2p2/6p1/3pp3/p1P4p/3P1r2/QP3q2/R6K b - - 1 61"},{"t":"m1","f":"2k5/8/3Q4/8/P3P3/3B4/1PP3PP/R4K1R w - - 3 40"},{"t":"m1","f":"3kr3/r7/p2pp3/2p5/3q1P2/P3Q3/6PP/5BKR b - - 3 34"},{"t":"m1","f":"7k/1p3Q2/8/p3N3/8/3P4/PP1B1P2/R3KB2 w Q - 1 25"},{"t":"m1","f":"rnb1k3/pp1p1pp1/8/2P3b1/P3n3/2P3P1/4r3/RK6 b q a3 0 17"},{"t":"m1","f":"7k/p4Q2/4B2p/8/8/2P5/PPP2PPP/R1B1K2R w KQ - 1 21"},{"t":"m1","f":"r3k2r/1pp2ppp/8/p1bPp1q1/P2n2b1/3P4/RPPN1PPP/2B1KB1R b Kkq - 2 11"},{"t":"m1","f":"r1b3k1/pp1n1rpp/8/5p2/3P4/PqN4P/5PP1/n1K2B1R b - - 2 21"}],"m2":[{"t":"m2","f":"2bqk3/1pp2p2/8/4n2r/r4b1P/2p5/2P1K3/7n b - - 0 22"},{"t":"m2","f":"2b2rk1/1p3ppp/2n1p3/2r3P1/8/P7/1KP1q3/8 b - - 0 23"},{"t":"m2","f":"r5k1/1pp2p2/6p1/3pp3/p1Pq3p/3P1r2/QP3R2/R5K1 b - c3 0 60"},{"t":"m2","f":"3kr3/r7/p2pp3/2p5/5P2/PQ6/6PP/q4BKR b - - 1 33"},{"t":"m2","f":"8/1p2Qp1k/8/p3N3/8/3P4/PP1B1P2/R3KB2 w Q - 7 24"},{"t":"m2","f":"6k1/pQ3p2/4B2p/8/8/2P5/PPP2PPP/R1B1K2R w KQ - 1 20"},{"t":"m2","f":"8/R4ppk/4b1p1/2P1n3/p3p3/8/r7/6K1 b - - 11 53"},{"t":"m2","f":"r2r2k1/2q5/8/pQ1n1p2/P2p2p1/1P1P2Pb/3R1P1P/6K1 b - - 22 61"},{"t":"m2","f":"5R1N/1p1bk1p1/3p3p/8/3P4/4B1P1/2P2P1P/3Q1RK1 w - - 1 23"},{"t":"m2","f":"2k4r/1pp2ppp/8/3bb3/5n2/6K1/2r5/8 b - - 3 29"},{"t":"m2","f":"6k1/pp3p2/3r2n1/4n3/2p1P2p/P6P/2P2P1P/6KR b - - 1 22"},{"t":"m2","f":"3r2k1/ppp2r2/4p2p/1P6/N3B3/P3Q3/6PP/6KR b - - 0 33"},{"t":"m2","f":"1r4k1/p1p5/nr1p1Q2/1p1P4/1PnR4/P3P1PP/1q3P2/R5K1 w - - 7 48"},{"t":"m2","f":"8/7Q/1p3Rpp/7k/2B5/5P1P/3P1PP1/4K2R w K - 0 24"}],"win":[{"t":"win","f":"r4rk1/pppqbppp/3pNn2/4p3/4P3/2NP1n1P/PPPQKP2/R1B2B1R b - - 2 14","s":"f3d2"},{"t":"win","f":"r1bqk2r/p1p1b2p/5p2/3Qnp2/RP6/2N1PN2/2P2PPP/2B1KB1R w Kkq - 1 11","s":"d5a8"},{"t":"win","f":"r1bqkb1r/ppp2ppp/3p4/4p1B1/7P/2NP4/PPQ1NKP1/R4B1R w kq e6 0 9","s":"g5d8"},{"t":"win","f":"r1b2rk1/ppp1np1p/3qpp2/8/3P4/P6P/1PPQPPPR/2R1KB2 b - - 2 13","s":"d6h2"},{"t":"win","f":"r1bqk1nr/1p3ppp/2n1p3/p2p4/1b6/1P1P1NP1/PBPQPP1P/R3KB1R b KQkq - 2 8","s":"b4d2"},{"t":"win","f":"r5k1/1pp2p2/5rp1/3pp3/p2q3p/3P1B2/QPP2R2/R5K1 b - - 7 59","s":"f6f3"},{"t":"win","f":"r1bk1bnr/1ppq1Qpp/2n1p3/1p4N1/3pP3/PP1B4/2PP1PPP/R1B1K2R w KQ - 1 11","s":"f7f8"},{"t":"win","f":"3kr3/r3p3/p2p4/2p5/5P2/P1q5/6PP/R3QBKR b - - 3 30","s":"c3d4"},{"t":"win","f":"r2k1b1r/pp1b1p1p/3p1n2/4p1B1/3P4/N5P1/PPP1NPBP/R3K2R w KQ - 2 14","s":"g5f6"},{"t":"win","f":"1k6/2r5/p7/8/P1R5/8/2P2P1P/K7 b - - 4 33","s":"c7c4"},{"t":"win","f":"r1bq1b1r/ppp1npp1/3pk2p/3Np3/2BP4/4PN2/R1P2PPP/2BQ1RK1 w - - 4 11","s":"d5c7"},{"t":"win","f":"rn3rk1/pp3p2/2p3n1/1B5p/4P3/2P4P/P1P2P1P/R2K3R b - - 4 13","s":"c6b5"},{"t":"win","f":"r1bqkb1r/p1ppn2p/8/1p2Q1p1/4P3/2N5/PPP1N1PP/R1B1KB1R w KQkq - 0 11","s":"e5h8"},{"t":"win","f":"3r2k1/ppp2rb1/1q2p2p/1P1pB3/N2Pn3/P2B1P2/3Q2PP/4R1KR w - - 12 29","s":"f3e4"}]};
   const THEMES = [
@@ -891,15 +912,24 @@ button.avatar { cursor: pointer }
       piecesEl.appendChild(el);
       if (from >= 0) { el.getBoundingClientRect(); el.classList.add('slide'); el.style.transform = pos(sq); }
     }
-    if (admin && prefs.adArrow && !review && !finished && mode !== 'online' && canMove()) {
+    const wantArrow = admin && prefs.adArrow && !review && !finished && mode !== 'online' && canMove();
+    const wantEval = admin && prefs.adEval && !review && mode !== 'online';
+    if (wantArrow || wantEval) {
       const key = E.toFen(game.s);
       if (hintCache.key !== key) {
-        let m = null;
-        if (mode === 'puzzle') m = game.legal().find(puzzleOk) || null;
-        else { const r = E.search(game.s, 2, 2); m = r ? r.move : null; }
-        hintCache = { key, m };
+        const r = game.legal().length ? E.search(game.s, 2, 2) : null;
+        let m = r ? r.move : null;
+        if (mode === 'puzzle') m = game.legal().find(puzzleOk) || m;
+        const sc = r ? r.score : (game.inCheck() ? -100000 : 0);
+        hintCache = { key, m, score: game.s.turn === 'w' ? sc : -sc };
       }
-      if (hintCache.m) piecesEl.appendChild(arrowSvg(hintCache.m.from, hintCache.m.to, 'rgba(48,118,222,.85)'));
+      if (wantArrow && hintCache.m) piecesEl.appendChild(arrowSvg(hintCache.m.from, hintCache.m.to, 'rgba(48,118,222,.85)'));
+    }
+    $('liveEval').hidden = !wantEval;
+    if (wantEval) {
+      const ev = hintCache.score;
+      $('liveEvalFill').style.width = winPct(ev) + '%';
+      $('liveEvalTxt').textContent = Math.abs(ev) >= 90000 ? 'Checkmate' : Math.abs(ev) < 15 ? 'Even' : (ev > 0 ? 'White +' : 'Black +') + (Math.min(Math.abs(ev), 2000) / 100).toFixed(1);
     }
     if (review && review.ready && review.idx > 0) drawReviewMarks();
   }
@@ -1038,7 +1068,7 @@ button.avatar { cursor: pointer }
       const m = E.bestMove(game.s, BOTS[level].ai);
       thinking = false;
       if (m && mode === 'bot' && !finished) commit(m, true);
-    }, 450 + Math.random() * 350);
+    }, admin && prefs.adFast ? 80 : 450 + Math.random() * 350);
   }
 
   board.addEventListener('pointerdown', e => {
@@ -1172,6 +1202,7 @@ button.avatar { cursor: pointer }
     $('hsPz').textContent = solved + ' of ' + total;
     $('hsStreak').textContent = pz.streak + (pz.best ? ' (best ' + pz.best + ')' : '');
     $('pzTag').textContent = solved + '/' + total;
+    paintThemes();
     const hc = coach(); $('hcAv').textContent = glyph(hc.glyph); $('hcAv').style.background = hc.color; $('hcName').textContent = hc.name; $('hcTag').textContent = hc.tag;
   }
   (function () {
@@ -1890,10 +1921,23 @@ button.avatar { cursor: pointer }
     svg.append(line, head);
     return svg;
   }
+  function curTheme() { const t = BOARD_THEMES.find(x => x.id === prefs.boardTheme); return t && (!t.admin || admin) ? t : BOARD_THEMES[0]; }
   function applyTheme() {
-    const t = BOARD_THEMES.find(x => x.id === prefs.boardTheme) || BOARD_THEMES[0], st = document.documentElement.style;
-    if (t.light) { st.setProperty('--sq-light', t.light); st.setProperty('--sq-dark', t.dark); }
+    const t = curTheme(), st = document.documentElement.style;
+    if (!t.base) { st.setProperty('--sq-light', t.light); st.setProperty('--sq-dark', t.dark); }
     else { st.removeProperty('--sq-light'); st.removeProperty('--sq-dark'); }
+  }
+  function paintThemes() {
+    const box = $('homeThemes'), cur = curTheme();
+    box.textContent = '';
+    BOARD_THEMES.filter(t => !t.admin || admin).forEach(t => {
+      const b = document.createElement('button'); b.className = 'swatch'; b.title = t.name; b.setAttribute('aria-label', t.name + ' board');
+      b.setAttribute('aria-pressed', t.id === cur.id);
+      for (let i = 0; i < 4; i++) { const q = document.createElement('i'); q.style.background = (i === 0 || i === 3) ? t.light : t.dark; b.appendChild(q); }
+      b.onclick = () => { prefs.boardTheme = t.id; store.set('cc-prefs', prefs); applyTheme(); paintThemes(); };
+      box.appendChild(b);
+    });
+    $('themeName').textContent = cur.name + (cur.admin ? ' (admin)' : '');
   }
   function armed(btn, label, fn) {
     if (btn.dataset.arm) { delete btn.dataset.arm; btn.textContent = label; fn(); return; }
@@ -1901,6 +1945,7 @@ button.avatar { cursor: pointer }
     setTimeout(() => { if (btn.dataset.arm) { delete btn.dataset.arm; btn.textContent = label; } }, 3000);
   }
   function paintAdmin() {
+    applyTheme();
     $('adminBtn').hidden = !admin;
     if ($('adminModal').hidden) return;
     $('adminLock').hidden = admin; $('adminBody').hidden = !admin;
@@ -1908,16 +1953,8 @@ button.avatar { cursor: pointer }
     $('adSetElo').value = profile.elo;
     $('adArrow').textContent = 'Show best move: ' + (prefs.adArrow ? 'on' : 'off');
     $('adArrow').setAttribute('aria-pressed', !!prefs.adArrow);
+    TOGGLES.forEach(([id, label]) => { $(id).textContent = label + ': ' + (prefs[id] ? 'on' : 'off'); $(id).setAttribute('aria-pressed', !!prefs[id]); });
     $('adLockBtn').hidden = amOwner;
-    const box = $('adThemes');
-    if (!box.children.length) BOARD_THEMES.forEach(t => {
-      const b = document.createElement('button'); b.className = 'swatch'; b.dataset.t = t.id; b.title = t.name; b.setAttribute('aria-label', t.name + ' board');
-      for (let i = 0; i < 4; i++) { const q = document.createElement('i'); q.style.background = (i === 0 || i === 3) ? (t.light || 'var(--sq-light)') : (t.dark || 'var(--sq-dark)'); b.appendChild(q); }
-      if (!t.light) { b.firstChild.style.background = '#ece6d6'; b.lastChild.style.background = '#ece6d6'; b.children[1].style.background = '#5b8790'; b.children[2].style.background = '#5b8790'; }
-      b.onclick = () => { prefs.boardTheme = t.id; store.set('cc-prefs', prefs); applyTheme(); paintAdmin(); };
-      box.appendChild(b);
-    });
-    box.querySelectorAll('.swatch').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === (prefs.boardTheme || 'lagoon')));
     const shared = amOwner && !!db;
     $('adShared').hidden = !shared;
     $('adminScope').textContent = shared ? 'Everything except the class ladder only changes this device.' : 'These tools change things on this device only.';
@@ -1979,7 +2016,81 @@ button.avatar { cursor: pointer }
     if (!doomed.length) return toast('There are no unfinished online games.');
     Promise.all(doomed.map(g => db.doc('games/' + g.id).delete())).then(() => toast('Deleted ' + doomed.length + ' unfinished games.')).catch(() => toast('Some games could not be deleted.'));
   });
-  $('adLockBtn').onclick = () => { admin = false; prefs.adArrow = false; store.set('cc-prefs', prefs); store.set('cc-admin', false); $('adminModal').hidden = true; paintAdmin(); render(); toast('Admin locked on this device.'); };
+  $('adLockBtn').onclick = () => { admin = false; prefs.adArrow = prefs.adEval = prefs.adFast = prefs.adParty = false; store.set('cc-prefs', prefs); applyTheme(); store.set('cc-admin', false); $('adminModal').hidden = true; paintAdmin(); render(); toast('Admin locked on this device.'); };
+  const TOGGLES = [['adEval', 'Evaluation bar'], ['adFast', 'Fast bots'], ['adParty', 'Party mode']];
+  TOGGLES.forEach(([id]) => { $(id).onclick = () => { prefs[id] = !prefs[id]; store.set('cc-prefs', prefs); hintCache = { key: '', m: null }; paintAdmin(); render(); }; });
+  function confetti() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const cv = document.createElement('canvas');
+    cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60';
+    document.body.appendChild(cv);
+    const dpr = window.devicePixelRatio || 1, W = cv.width = innerWidth * dpr, H = cv.height = innerHeight * dpr, ctx = cv.getContext('2d');
+    const cols = ['#f6c43e', '#55bcc3', '#e2811c', '#7b4fd6', '#2e9d57', '#d4432f'];
+    const ps = Array.from({ length: 150 }, () => ({ x: W / 2 + (Math.random() - .5) * W * .3, y: H * .4, vx: (Math.random() - .5) * 20 * dpr, vy: (-Math.random() * 17 - 6) * dpr,
+      s: (6 + Math.random() * 6) * dpr, r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: cols[Math.floor(Math.random() * cols.length)] }));
+    const t0 = performance.now();
+    (function frame(t) {
+      const k = (t - t0) / 2600; ctx.clearRect(0, 0, W, H);
+      ps.forEach(q => { q.vy += .5 * dpr; q.vx *= .99; q.x += q.vx; q.y += q.vy; q.r += q.vr;
+        ctx.save(); ctx.globalAlpha = Math.max(0, 1 - k); ctx.translate(q.x, q.y); ctx.rotate(q.r); ctx.fillStyle = q.c; ctx.fillRect(-q.s / 2, -q.s / 4, q.s, q.s / 2); ctx.restore(); });
+      if (k < 1) requestAnimationFrame(frame); else cv.remove();
+    })(t0);
+  }
+  const plainWin = sfx.win;
+  sfx.win = () => { plainWin(); if (admin && prefs.adParty) confetti(); };
+  $('adUndo').onclick = () => {
+    if (mode !== 'bot' || !game.moves.length) return toast('Take back works in a computer game once a move has been made.');
+    clearTimeout(botTimer); thinking = false; finished = false; endInfo = null; review = null; reviewToken++;
+    $('bannerOv').hidden = true; $('adminModal').hidden = true;
+    game.undo();
+    if (game.moves.length && game.s.turn !== myColor) game.undo();
+    const l = game.moves[game.moves.length - 1]; lastMove = l ? l.move : null; selected = -1;
+    show('game');
+    if (game.s.turn !== myColor) botTurn();
+  };
+  $('adFenGo').onclick = () => {
+    const fen = $('adFen').value.trim().replace(/\s+/g, ' ');
+    let g = null;
+    try {
+      const st = E.fromFen(fen), count = c => st.b.filter(q => q === c).length;
+      if (st.b.length !== 64 || (st.turn !== 'w' && st.turn !== 'b') || count('K') !== 1 || count('k') !== 1) throw new Error('bad');
+      if (E.inCheck(Object.assign({}, st, { turn: st.turn === 'w' ? 'b' : 'w' }))) throw new Error('bad');
+      g = new E.Game(fen);
+      if (!g.legal().length) throw new Error('bad');
+    } catch (e) { return toast('That position is not valid. Paste a full FEN, like the one Copy this game gives.'); }
+    $('adminModal').hidden = true;
+    clearTimeout(botTimer); thinking = false;
+    goTo('bot');
+    game = g; myColor = g.s.turn; flipped = myColor === 'b'; lastMove = null; selected = -1; finished = false; endInfo = null;
+    render(); toast('Playing from your position against ' + BOTS[botLevel].name + '.');
+  };
+  function gamePgn() {
+    const start = game.states.length ? game.states[0] : game.s, fen = E.toFen(start), st = game.status(), res = st.over ? st.result : '*';
+    const d = new Date(), date = d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
+    const nm = c => String(sideInfo(c).name).replace(/["\\]/g, '');
+    let head = '[Event "Classroom Chess"]\n[Date "' + date + '"]\n[White "' + nm('w') + '"]\n[Black "' + nm('b') + '"]\n[Result "' + res + '"]\n';
+    if (fen !== E.START) head += '[SetUp "1"]\n[FEN "' + fen + '"]\n';
+    let body = '', n = start.full;
+    const blackFirst = start.turn === 'b';
+    game.moves.forEach((m, i) => {
+      const white = blackFirst ? i % 2 === 1 : i % 2 === 0;
+      if (white) body += n + '. '; else if (i === 0) body += n + '... ';
+      body += m.san + ' ';
+      if (!white) n++;
+    });
+    return head + '\n' + body + res;
+  }
+  $('adCopy').onclick = () => {
+    if (!game.moves.length) return toast('Play some moves first.');
+    const txt = gamePgn(), out = $('adPgn');
+    out.value = txt; out.hidden = false;
+    const manual = () => { out.focus(); out.select(); toast('Select the moves below and copy them.'); };
+    try { navigator.clipboard.writeText(txt).then(() => toast('Game copied.'), manual); } catch (e) { manual(); }
+  };
+  $('adWipe').onclick = () => armed($('adWipe'), 'Reset everything on this device', () => {
+    ['cc-profile', 'cc-prefs', 'cc-puzzles', 'cc-applied', 'cc-admin'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+    location.reload();
+  });
   const checkHash = () => { if (location.hash === '#admin') openAdmin(); };
   window.addEventListener('hashchange', checkHash);
 
