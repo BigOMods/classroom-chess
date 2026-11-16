@@ -116,7 +116,7 @@ main { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start }
   filter: drop-shadow(0 .5cqw .35cqw rgba(0, 0, 0, .32)) }
 .piece.w { color: var(--pw); -webkit-text-stroke: .34cqw var(--pw-edge) }
 .piece.b { color: var(--pb); -webkit-text-stroke: .2cqw var(--pb-edge) }
-.piece.slide { transition: transform .16s cubic-bezier(.2, .8, .3, 1) }
+.piece.slide { transition: transform var(--slide, .16s) cubic-bezier(.2, .8, .3, 1) }
 .piece.drag { z-index: 5; filter: drop-shadow(0 1.6cqw 1.2cqw rgba(0, 0, 0, .45)) }
 @media (prefers-reduced-motion: reduce) { .piece.slide { transition: none } }
 
@@ -201,6 +201,15 @@ button.avatar { cursor: pointer }
 .swatch[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) }
 .swatch i { display: block }
 .namebtn { max-width: 11em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.board.nocoords .co { display: none }
+.clk { margin-left: 8px; font: 700 16px var(--display); font-variant-numeric: tabular-nums; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 9px; min-width: 4.2em; text-align: center }
+.clk.run { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.clk.low { color: var(--bad) } .clk.run.low { background: var(--bad); color: #fff; border-color: var(--bad) }
+.setrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; min-height: 34px }
+.setrow > span { min-width: 0 }
+.setrow input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent) }
+.setrow input[type="range"] { accent-color: var(--accent); flex: 1 1 140px; max-width: 220px }
+select.inp { flex: 0 1 auto }
 .note { color: var(--muted); font-size: 13.5px; margin: 0 }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; z-index: 30; max-width: calc(100% - 32px) }
 </style>
@@ -219,7 +228,7 @@ button.avatar { cursor: pointer }
     <div class="chip" title="Your rating"><small>Your rating</small><b id="myElo">300</b><small id="myRec">0W 0L 0D</small></div>
     <button class="icon-btn namebtn" id="nameBtn" aria-label="Change your name"></button>
     <button class="icon-btn" id="adminBtn" hidden>Admin</button>
-    <button class="icon-btn" id="soundBtn" aria-pressed="true">Sound on</button>
+    <button class="icon-btn" id="setBtn">Settings</button>
   </header>
 
   <section class="home" id="homeScreen">
@@ -269,7 +278,7 @@ button.avatar { cursor: pointer }
           <button class="btn" id="rvCoach">Change coach</button><button class="btn" id="rvDone">Close review</button>
         </div>
       </div>
-      <div class="strip" id="stripTop"><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="caps"></span></div>
+      <div class="strip" id="stripTop"><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="caps"></span><span class="clk" hidden></span></div>
       <div class="board" id="board">
         <div class="squares" id="squares"></div>
         <div class="pieces" id="pieces"></div>
@@ -281,7 +290,7 @@ button.avatar { cursor: pointer }
           </div>
         </div>
       </div>
-      <div class="strip" id="stripBot"><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="caps"></span></div>
+      <div class="strip" id="stripBot"><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="caps"></span><span class="clk" hidden></span></div>
       <div class="evalbar" id="liveEval" hidden title="Who is ahead"><div id="liveEvalFill"></div><span id="liveEvalTxt"></span></div>
     </div>
 
@@ -322,12 +331,14 @@ button.avatar { cursor: pointer }
             <button data-c="w" aria-pressed="true">White</button><button data-c="r" aria-pressed="false">Random</button><button data-c="b" aria-pressed="false">Black</button>
           </div>
         </div>
+        <div class="row"><label class="label" for="clockBot">Clock</label><select class="inp clocksel" id="clockBot"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option></select></div>
         <p class="note">Games against the computer are for practice and do not change your rating. Only games against classmates do.</p>
       </div>
 
       <div class="card" id="localCard" hidden>
         <h3>Pass &amp; play</h3>
         <p class="note">Two people share this screen and take turns. These games are not rated.</p>
+        <div class="row"><label class="label" for="clockLocal">Clock</label><select class="inp clocksel" id="clockLocal"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option></select></div>
       </div>
 
       <div class="card" id="lobbyCard" hidden>
@@ -336,11 +347,12 @@ button.avatar { cursor: pointer }
         <div class="roombox" id="roomBox" hidden>
           <div id="roomSetup" class="roombox">
             
+            <div class="row"><label class="label" for="clockRoom">Clock for rooms you create</label><select class="inp clocksel" id="clockRoom"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option></select></div>
             <div class="row"><button class="btn primary" id="roomCreate">Create a room</button></div>
             <p class="note msg-bad" id="roomErr" hidden></p>
             <div class="row"><input class="inp" id="roomCode" maxlength="5" placeholder="Room code" autocomplete="off" aria-label="Room code"><button class="btn" id="roomJoin">Join room</button></div>
           </div>
-          <div id="roomLive" hidden><span class="label">Room code</span><div class="roomcode" id="roomShow"></div><p class="note" id="roomHint"></p></div>
+          <div id="roomLive" hidden><span class="label">Room code</span><div class="row"><div class="roomcode" id="roomShow"></div><button class="btn" id="roomCopy">Copy code</button></div><p class="note" id="roomHint"></p></div>
         </div>
         <div class="row" id="lobbyActions" hidden><button class="btn primary" id="createBtn">Create a game</button></div>
         <div class="list" id="gameList"></div>
@@ -407,6 +419,31 @@ button.avatar { cursor: pointer }
       </div>
       <div class="row"><button class="btn" id="adLockBtn">Lock admin on this device</button><button class="btn primary" data-close-admin>Close</button></div>
     </div>
+  </div>
+</div>
+<div class="modal" id="setModal" hidden>
+  <div class="card admin" role="dialog" aria-labelledby="setHead">
+    <h3 id="setHead">Settings</h3>
+    <b>Look</b>
+    <div class="setrow"><span>Page theme</span><div class="seg" id="setTheme"><button data-v="system">System</button><button data-v="light">Light</button><button data-v="dark">Dark</button></div></div>
+    <div class="setrow"><span>Board colours</span><div class="row" id="setThemes"></div></div>
+    <div class="setrow"><span>Piece movement</span><div class="seg" id="setAnim"><button data-v="off">Instant</button><button data-v="normal">Normal</button><button data-v="slow">Slow</button></div></div>
+    <label class="setrow" for="setCoords"><span>Show board coordinates</span><input type="checkbox" id="setCoords"></label>
+    <label class="setrow" for="setDots"><span>Show legal moves</span><input type="checkbox" id="setDots"></label>
+    <label class="setrow" for="setHi"><span>Highlight the last move</span><input type="checkbox" id="setHi"></label>
+    <b>Playing</b>
+    <label class="setrow" for="setQueen"><span>Always promote to a queen</span><input type="checkbox" id="setQueen"></label>
+    <label class="setrow" for="setConfirm"><span>Confirm before resigning</span><input type="checkbox" id="setConfirm"></label>
+    <div class="setrow"><label for="setClock">Clock for new games</label><select class="inp clocksel" id="setClock"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option></select></div>
+    <b>Sound</b>
+    <label class="setrow" for="setSound"><span>Sound effects</span><input type="checkbox" id="setSound"></label>
+    <div class="setrow"><label for="setVol">Volume</label><input type="range" id="setVol" min="0" max="100" step="5"></div>
+    <b>You</b>
+    <div class="setrow"><span id="setName"></span><button class="btn" id="setNameBtn">Change name</button></div>
+    <b>Keyboard shortcuts</b>
+    <p class="note">F flips the board. Esc closes a window. In a game review, the left and right arrow keys step through the moves.</p>
+    <p class="note">Unfinished computer and pass and play games are saved on this device, so you can carry on after closing the page.</p>
+    <div class="row"><button class="btn primary" id="setDone">Done</button></div>
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -781,14 +818,16 @@ button.avatar { cursor: pointer }
   const FRESH = { elo: 300, rd: 110, w: 0, l: 0, d: 0, v: 3 };
   const savedProfile = store.get('cc-profile', {}); /* older saves are dropped: ratings restarted at 300 */
   let profile = Object.assign({}, FRESH, savedProfile.v === 3 ? savedProfile : {});
-  let prefs = Object.assign({ sound: true, bot: 1, color: 'w', coach: 'maple' }, store.get('cc-prefs', {}));
+  let prefs = Object.assign({ sound: true, bot: 1, color: 'w', coach: 'maple', vol: 70, anim: 'normal', dots: true, coords: true, hiLast: true, autoQueen: false, confirmResign: true, uiTheme: 'system', clock: 'none' }, store.get('cc-prefs', {}));
   if (!(prefs.bot >= 0 && prefs.bot < BOTS.length)) prefs.bot = 1;
   let game = new E.Game();
   let mode = 'bot', myColor = 'w', flipped = false, selected = -1, lastMove = null;
   let finished = false, thinking = false, botTimer = 0, drag = null, endInfo = null;
   let review = null, reviewToken = 0;
   const ADMIN_HASH = 'dd7ee760ac043fb45203d43fe2599aa9177603cd108fb8cd77a3071c6356f288';
-  let drawSentAt = -1, drawIncoming = -1, leaveArmed = 0;
+  let drawSentAt = -1, drawIncoming = -1, leaveArmed = 0, clock = null, clockTimer = 0;
+  const pendingSave = store.get('cc-save', null);
+  const TCS = ['none', '1+0', '3+0', '3+2', '5+0', '10+0', '15+10'];
   let admin = store.get('cc-admin', false) === true, amOwner = false, hintCache = { key: '', m: null };
   const BOARD_THEMES = [
     { id: 'lagoon', name: 'Lagoon', light: '#ece6d6', dark: '#5b8790', base: true },
@@ -822,6 +861,11 @@ button.avatar { cursor: pointer }
     } catch (e) { return null; }
     return ac;
   }
+  function out(a) {
+    if (!a.ccMaster) { a.ccMaster = a.createGain(); a.ccMaster.connect(a.destination); }
+    a.ccMaster.gain.value = Math.max(0, Math.min(100, Number(prefs.vol) || 0)) / 100;
+    return a.ccMaster;
+  }
   function knock(when, pitch, vol) {
     const a = audio(); if (!a) return;
     const t = a.currentTime + when;
@@ -830,18 +874,18 @@ button.avatar { cursor: pointer }
     const n = a.createBufferSource(); n.buffer = buf;
     const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = pitch * 5; f.Q.value = 1.4;
     const ng = a.createGain(); ng.gain.value = vol * 0.9;
-    n.connect(f).connect(ng).connect(a.destination); n.start(t);
+    n.connect(f).connect(ng).connect(out(a)); n.start(t);
     const o = a.createOscillator(), g = a.createGain();
     o.type = 'sine'; o.frequency.setValueAtTime(pitch, t); o.frequency.exponentialRampToValueAtTime(pitch * 0.5, t + 0.09);
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
-    o.connect(g).connect(a.destination); o.start(t); o.stop(t + 0.12);
+    o.connect(g).connect(out(a)); o.start(t); o.stop(t + 0.12);
   }
   function tone(when, freq, dur, vol, type) {
     const a = audio(); if (!a) return;
     const t = a.currentTime + when, o = a.createOscillator(), g = a.createGain();
     o.type = type || 'triangle'; o.frequency.value = freq;
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+    o.connect(g).connect(out(a)); o.start(t); o.stop(t + dur + 0.02);
   }
   const sfx = {
     move() { knock(0, 190, 0.5); },
@@ -883,11 +927,11 @@ button.avatar { cursor: pointer }
     for (let i = 0; i < 64; i++) {
       const sq = toSq(i), el = sqEls[i];
       let cls = 'sq' + (((i >> 3) + (i & 7)) % 2 ? ' dark' : '');
-      if (lastMove && (lastMove.from === sq || lastMove.to === sq)) cls += ' hi';
+      if (prefs.hiLast !== false && lastMove && (lastMove.from === sq || lastMove.to === sq)) cls += ' hi';
       if (sq === selected) cls += ' sel';
       if (sq === kingInCheck) cls += ' chk';
       const t = targets.find(m => m.to === sq);
-      if (t) cls += t.captured ? ' ring' : ' dot';
+      if (t && prefs.dots !== false) cls += t.captured ? ' ring' : ' dot';
       el.className = cls;
       let co = '';
       if ((i & 7) === 0) co += '<span class="co rk">' + (8 - (sq >> 3)) + '</span>';
@@ -968,6 +1012,7 @@ button.avatar { cursor: pointer }
       if (cap.mat < 0) { const i = document.createElement('i'); i.textContent = '+' + (-cap.mat); caps.appendChild(i); }
       el.classList.toggle('turn', review ? view().turn === color : !finished && game.s.turn === color);
     });
+    paintClocks();
   }
   function renderMoves() {
     const el = $('moves'); el.textContent = '';
@@ -1010,6 +1055,7 @@ button.avatar { cursor: pointer }
       main.hidden = mode === 'puzzle';
       main.textContent = mode === 'bot' && inProgress() ? 'Resign' : 'New game';
     }
+    if (main.dataset.arm) main.textContent = 'Click again to confirm';
     $('undoBtn').hidden = mode !== 'local';
     const roomLive = mode === 'online' && og && og.data && og.data.status === 'active';
     const drawOk = !finished && !review && ((mode === 'bot' && inProgress()) || (mode === 'local' && game.moves.length > 0) || roomLive);
@@ -1035,7 +1081,7 @@ button.avatar { cursor: pointer }
     $('myElo').textContent = profile.elo;
     $('myRec').textContent = profile.w + 'W ' + profile.l + 'L ' + profile.d + 'D';
   }
-  function render(anim) { renderSquares(); renderPieces(anim); renderStrips(); renderMoves(); renderStatus(); renderReview(); }
+  function render(anim) { renderSquares(); renderPieces(anim); renderStrips(); renderMoves(); renderStatus(); renderReview(); saveGame(); }
 
   /* ---------- playing moves ---------- */
   function canMove() {
@@ -1049,6 +1095,7 @@ button.avatar { cursor: pointer }
     const opts = game.legalFrom(from).filter(m => m.to === to);
     if (!opts.length) return false;
     if (opts.length === 1) { commit(opts[0], slide); return true; }
+    if (prefs.autoQueen) { const q = opts.find(m => m.promo === 'q'); if (q) { commit(q, slide); return true; } }
     const box = $('promo'); box.textContent = '';
     opts.forEach(m => {
       const b = document.createElement('button');
@@ -1066,6 +1113,7 @@ button.avatar { cursor: pointer }
     if (mode === 'puzzle') return puzzleMove(m, slide, false);
     const rec = game.play(m);
     lastMove = m; selected = -1;
+    clockAfterMove();
     moveSound(rec);
     render(slide ? m : null);
     if (mode === 'online') { if (!remote) pushMove(); return; }
@@ -1132,7 +1180,7 @@ button.avatar { cursor: pointer }
   }
   function finish(result, reason, oppElo) {
     if (finished) return;
-    finished = true; thinking = false; clearTimeout(botTimer);
+    finished = true; thinking = false; clearTimeout(botTimer); stopClock();
     let title, delta = null;
     const winner = result === '1-0' ? 'w' : result === '0-1' ? 'b' : null;
     if (mode === 'local') {
@@ -1160,11 +1208,13 @@ button.avatar { cursor: pointer }
   let botLevel = prefs.bot;
   function newGame() {
     drawSentAt = drawIncoming = -1;
+    startClock('none');
     if (mode === 'puzzle') return loadPuzzle(pz.theme);
     puzzle = null;
     clearTimeout(botTimer); thinking = false; finished = false; endInfo = null; selected = -1; lastMove = null; review = null; reviewToken++;
     $('bannerOv').hidden = true; $('promoOv').hidden = true;
     game = new E.Game();
+    if (mode === 'bot' || mode === 'local') startClock(prefs.clock);
     if (mode === 'bot') {
       botLevel = prefs.bot;
       myColor = prefs.color === 'r' ? (Math.random() < 0.5 ? 'w' : 'b') : prefs.color;
@@ -1207,10 +1257,10 @@ button.avatar { cursor: pointer }
   function goTo(dest) {
     audio();
     if (dest === 'home') return show('home');
-    setMode(dest); show('game');
+    setMode(dest); show('game'); resumeIfNeeded();
   }
   document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => goTo(b.dataset.go));
-  $('continueBtn').onclick = () => show('game');
+  $('continueBtn').onclick = () => { show('game'); resumeIfNeeded(); };
   $('titleBtn').onclick = () => goTo('home');
   function renderHome() {
     const total = PUZZLES.m1.length + PUZZLES.win.length + PUZZLES.m2.length, solved = Object.keys(pz.done).length;
@@ -1219,6 +1269,9 @@ button.avatar { cursor: pointer }
     $('hsPz').textContent = solved + ' of ' + total;
     $('hsStreak').textContent = pz.streak + (pz.best ? ' (best ' + pz.best + ')' : '');
     $('pzTag').textContent = solved + '/' + total;
+    const canContinue = mode !== 'puzzle' && !finished && !!(game.moves.length || og);
+    $('continueBtn').hidden = !canContinue;
+    if (canContinue) $('continueBtn').textContent = mode === 'bot' ? 'Continue your game vs ' + BOTS[botLevel].name : mode === 'local' ? 'Continue your pass and play game' : 'Back to your online game';
     paintThemes();
     const hc = coach(); $('hcAv').textContent = glyph(hc.glyph); $('hcAv').style.background = hc.color; $('hcName').textContent = hc.name; $('hcTag').textContent = hc.tag;
   }
@@ -1329,7 +1382,7 @@ button.avatar { cursor: pointer }
   $('mainBtn').onclick = () => {
     audio();
     if (mode === 'online') return onlineMain();
-    if (mode === 'bot' && inProgress()) return finish(myColor === 'w' ? '0-1' : '1-0', 'resignation');
+    if (mode === 'bot' && inProgress()) { const go = () => finish(myColor === 'w' ? '0-1' : '1-0', 'resignation'); return prefs.confirmResign ? armed($('mainBtn'), 'Resign', go) : go(); }
     newGame(); sfx.start();
   };
   $('undoBtn').onclick = () => {
@@ -1340,8 +1393,147 @@ button.avatar { cursor: pointer }
   $('flipBtn').onclick = () => { flipped = !flipped; render(); };
   $('bannerClose').onclick = () => { $('bannerOv').hidden = true; };
   $('bannerAgain').onclick = () => { if (mode === 'online') { closeOnline(); render(); } else { newGame(); sfx.start(); } };
-  function paintSound() { $('soundBtn').textContent = prefs.sound ? 'Sound on' : 'Sound off'; $('soundBtn').setAttribute('aria-pressed', prefs.sound); }
-  $('soundBtn').onclick = () => { prefs.sound = !prefs.sound; store.set('cc-prefs', prefs); paintSound(); if (prefs.sound) sfx.move(); };
+  function paintSound() { paintSettings(); }
+  function savePrefs() { store.set('cc-prefs', prefs); }
+  function applySettings() {
+    const root = document.documentElement;
+    if (prefs.uiTheme === 'light' || prefs.uiTheme === 'dark') { root.setAttribute('data-theme', prefs.uiTheme); root.dataset.ccTheme = '1'; }
+    else if (root.dataset.ccTheme) { root.removeAttribute('data-theme'); delete root.dataset.ccTheme; }
+    root.style.setProperty('--slide', prefs.anim === 'off' ? '0s' : prefs.anim === 'slow' ? '.32s' : '.16s');
+    board.classList.toggle('nocoords', prefs.coords === false);
+  }
+  const CHECKS = [['setCoords', 'coords'], ['setDots', 'dots'], ['setHi', 'hiLast'], ['setQueen', 'autoQueen'], ['setConfirm', 'confirmResign'], ['setSound', 'sound']];
+  const SEGS = [['setTheme', 'uiTheme'], ['setAnim', 'anim']];
+  function paintSettings() {
+    CHECKS.forEach(([id, k]) => { $(id).checked = prefs[k] !== false; });
+    SEGS.forEach(([id, k]) => $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === prefs[k])));
+    document.querySelectorAll('.clocksel').forEach(el => { el.value = TCS.includes(prefs.clock) ? prefs.clock : 'none'; });
+    $('setVol').value = prefs.vol;
+    $('setVol').disabled = !prefs.sound;
+    $('setName').textContent = 'Playing as ' + (prefs.name || 'no name yet');
+  }
+  CHECKS.forEach(([id, k]) => { $(id).onchange = () => { prefs[k] = $(id).checked; savePrefs(); applySettings(); paintSettings(); render(); if (k === 'sound' && prefs.sound) { audio(); sfx.move(); } }; });
+  SEGS.forEach(([id, k]) => $(id).querySelectorAll('button').forEach(b => { b.onclick = () => { prefs[k] = b.dataset.v; savePrefs(); applySettings(); paintSettings(); }; }));
+  $('setVol').oninput = () => { prefs.vol = Number($('setVol').value); savePrefs(); };
+  $('setVol').onchange = () => { audio(); sfx.move(); };
+  document.querySelectorAll('.clocksel').forEach(el => { el.onchange = () => {
+    prefs.clock = TCS.includes(el.value) ? el.value : 'none'; savePrefs(); paintSettings();
+    if ((mode === 'bot' || mode === 'local') && !inProgress() && !finished) newGame();
+  }; });
+  $('setBtn').onclick = () => { paintSettings(); paintThemes(); $('setModal').hidden = false; };
+  $('setDone').onclick = () => { $('setModal').hidden = true; };
+  $('setModal').onclick = e => { if (e.target === $('setModal')) $('setModal').hidden = true; };
+  $('setNameBtn').onclick = () => { $('setModal').hidden = true; askName(); };
+
+  /* ---------- clocks ---------- */
+  function parseTc(tc) { if (!TCS.includes(tc) || tc === 'none') return null; const [m, i] = tc.split('+').map(Number); return { base: m * 60000, inc: i * 1000 }; }
+  function settleClock() { if (clock && clock.running) { const now = performance.now(); clock[clock.running] -= now - clock.last; clock.last = now; } }
+  function stopClock() { settleClock(); if (clock) clock.running = null; clearInterval(clockTimer); clockTimer = 0; paintClocks(); }
+  function startClock(tc) {
+    clearInterval(clockTimer); clockTimer = 0;
+    const t = parseTc(tc);
+    clock = t ? { w: t.base, b: t.base, inc: t.inc, running: null, last: 0 } : null;
+    paintClocks();
+  }
+  function runClock(color) {
+    if (!clock || finished) return;
+    settleClock(); clock.running = color; clock.last = performance.now();
+    if (!clockTimer) clockTimer = setInterval(tickClock, 100);
+    paintClocks();
+  }
+  function clockAfterMove() {
+    if (!clock || finished) return;
+    const mover = game.s.turn === 'w' ? 'b' : 'w';
+    settleClock();
+    if (clock.running === mover) clock[mover] += clock.inc;
+    runClock(game.s.turn);
+  }
+  function onlyKing(color) { return !game.s.b.some(q => q && E.colorOf(q) === color && q.toLowerCase() !== 'k'); }
+  function tickClock() {
+    if (!clock || !clock.running || finished) { if (finished) stopClock(); return; }
+    settleClock();
+    const c = clock.running;
+    if (clock[c] <= 0) {
+      clock[c] = 0; clock.running = null; clearInterval(clockTimer); clockTimer = 0; paintClocks();
+      const other = c === 'w' ? 'b' : 'w', result = onlyKing(other) ? '1/2-1/2' : (c === 'w' ? '0-1' : '1-0');
+      if (mode === 'online') {
+        if (c === myColor && og && og.p2p && og.data.status === 'active') { rtcSend(og, { t: 'flag' }); roomFinish(result, 'timeout'); }
+        return;
+      }
+      if (mode === 'bot' || mode === 'local') finish(result, 'timeout');
+      return;
+    }
+    paintClocks();
+  }
+  function fmtClock(ms) {
+    ms = Math.max(0, ms);
+    if (ms < 20000) return Math.floor(ms / 1000) + '.' + Math.floor(ms % 1000 / 100);
+    const sec = Math.ceil(ms / 1000);
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+  }
+  function paintClocks() {
+    const bottom = flipped ? 'b' : 'w', top = flipped ? 'w' : 'b';
+    [[$('stripTop'), top], [$('stripBot'), bottom]].forEach(([el, c]) => {
+      const k = el.querySelector('.clk');
+      k.hidden = !clock || mode === 'puzzle';
+      if (k.hidden) return;
+      k.textContent = fmtClock(clock[c]);
+      k.classList.toggle('run', clock.running === c);
+      k.classList.toggle('low', clock[c] < 20000);
+    });
+  }
+
+  /* ---------- saved games ---------- */
+  function saveGame() {
+    if (mode !== 'bot' && mode !== 'local') return;
+    try {
+      if (game.moves.length && !finished && !review) {
+        settleClock();
+        localStorage.setItem('cc-save', JSON.stringify({ mode, moves: game.moves.map(m => m.uci), myColor, bot: botLevel, fen: E.toFen(game.states[0]),
+          clock: clock ? { w: Math.round(clock.w), b: Math.round(clock.b), inc: clock.inc } : null }));
+      } else localStorage.removeItem('cc-save');
+    } catch (e) {}
+  }
+  function restoreGame() {
+    const sv = pendingSave;
+    if (!sv || (sv.mode !== 'bot' && sv.mode !== 'local') || !Array.isArray(sv.moves) || !sv.moves.length) return;
+    try {
+      const g = new E.Game(typeof sv.fen === 'string' ? sv.fen : undefined);
+      sv.moves.forEach(u => { if (!g.playUci(String(u))) throw new Error('bad save'); });
+      if (g.status().over) throw new Error('finished');
+      mode = sv.mode; game = g;
+      myColor = sv.myColor === 'b' ? 'b' : 'w';
+      botLevel = BOTS[sv.bot] ? sv.bot : 1;
+      flipped = mode === 'bot' && myColor === 'b';
+      finished = false; endInfo = null; selected = -1;
+      const last = g.moves[g.moves.length - 1]; lastMove = last ? last.move : null;
+      clock = sv.clock ? { w: num(sv.clock.w, 0, 3600000, 60000), b: num(sv.clock.b, 0, 3600000, 60000), inc: num(sv.clock.inc, 0, 60000, 0), running: null, last: 0 } : null;
+      render();
+    } catch (e) { try { localStorage.removeItem('cc-save'); } catch (x) {} }
+  }
+  function resumeIfNeeded() {
+    if (finished || review || (mode !== 'bot' && mode !== 'local') || !game.moves.length) return;
+    if (clock && !clock.running) runClock(game.s.turn);
+    if (mode === 'bot' && game.s.turn !== myColor && !thinking) botTurn();
+  }
+
+  /* ---------- keyboard shortcuts ---------- */
+  document.addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) || '';
+    if (e.key === 'Escape') {
+      ['setModal', 'coachModal', 'adminModal'].forEach(id => { $(id).hidden = true; });
+      if (prefs.name) $('nameModal').hidden = true;
+      return;
+    }
+    if (/INPUT|TEXTAREA|SELECT/.test(tag) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if ((e.key === 'f' || e.key === 'F') && !$('gameScreen').hidden) { flipped = !flipped; render(); }
+  });
+  $('roomCopy').onclick = () => {
+    const code = og && og.code;
+    if (!code) return;
+    try { navigator.clipboard.writeText(code).then(() => toast('Room code copied.'), () => toast('Could not copy. The code is ' + code + '.')); }
+    catch (e) { toast('Could not copy. The code is ' + code + '.'); }
+  };
   let toastTimer = 0;
   function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3200); }
 
@@ -1650,7 +1842,7 @@ button.avatar { cursor: pointer }
     if (og.p2p) {
       const rec = game.moves[game.moves.length - 1];
       og.data.moves.push(rec.uci);
-      rtcSend(og, { t: 'move', uci: rec.uci, n: game.moves.length - 1 });
+      rtcSend(og, { t: 'move', uci: rec.uci, n: game.moves.length - 1, clk: clock ? Math.round(clock[myColor]) : null });
       const st0 = game.status();
       if (st0.over) roomFinish(st0.result, st0.reason);
       return;
@@ -1663,6 +1855,7 @@ button.avatar { cursor: pointer }
   function onlineMain() {
     if (!og) return;
     const st = og.data && og.data.status, g = og;
+    if (st === 'active' && prefs.confirmResign && !$('mainBtn').dataset.arm) return armed($('mainBtn'), 'Resign', onlineMain);
     if (og.p2p) {
       if (st === 'active') { rtcSend(og, { t: 'resign' }); roomFinish(myColor === 'w' ? '0-1' : '1-0', 'resignation'); }
       else { closeOnline(); render(); }
@@ -1900,15 +2093,15 @@ button.avatar { cursor: pointer }
     } else if (msg.t === 'hello' && room.host && d.status === 'open' && !room.opp) {
       room.opp = msg.from;
       setOpp(room.hostColor === 'w' ? 'b' : 'w', msg);
-      d[room.hostColor + 'Elo'] = profile.elo; d.status = 'active';
-      relayPost(room, room.startMsg = { t: 'start', to: msg.from, hostColor: room.hostColor, elo: profile.elo, rd: profile.rd, name: myRoomName() })
+      d[room.hostColor + 'Elo'] = profile.elo; d.status = 'active'; startClock(prefs.clock);
+      relayPost(room, room.startMsg = { t: 'start', to: msg.from, tc: prefs.clock || 'none', hostColor: room.hostColor, elo: profile.elo, rd: profile.rd, name: myRoomName() })
         .then(() => hostOffer(room)).catch(() => toast('Could not start the game. Check your connection.'));
       sfx.start(); render();
     } else if (msg.t === 'start' && !room.host && msg.to === room.me && d.status === 'open' && (msg.hostColor === 'w' || msg.hostColor === 'b')) {
       room.opp = msg.from; room.connecting = false;
       setOpp(msg.hostColor, msg);
       myColor = msg.hostColor === 'w' ? 'b' : 'w'; flipped = myColor === 'b';
-      d[myColor] = 'me'; d[myColor + 'Elo'] = profile.elo; d.status = 'active';
+      d[myColor] = 'me'; d[myColor + 'Elo'] = profile.elo; d.status = 'active'; startClock(TCS.includes(msg.tc) ? msg.tc : 'none');
       sfx.start(); render();
     } else if (msg.t === 'offer' && !room.host && msg.to === room.me && typeof msg.sdp === 'string' && !room.pc) joinAnswer(room, msg.sdp);
     else if (msg.t === 'answer' && room.host && msg.to === room.me && typeof msg.sdp === 'string' && room.pc && !room.pc.currentRemoteDescription) {
@@ -1917,10 +2110,12 @@ button.avatar { cursor: pointer }
       const m = game.legal().find(x => E.uci(x) === msg.uci);
       if (!m) return;
       d.moves.push(msg.uci); commit(m, true, true);
+      if (clock && typeof msg.clk === 'number') { clock[myColor === 'w' ? 'b' : 'w'] = Math.max(0, Math.min(msg.clk, 3600000)); paintClocks(); }
       const st = game.status();
       if (st.over) roomFinish(st.result, st.reason);
     } else if (msg.t === 'resign' && d.status === 'active') roomFinish(myColor === 'w' ? '1-0' : '0-1', 'resignation');
     else if (msg.t === 'bye') oppGone(room, true);
+    else if (msg.t === 'flag' && d.status === 'active') roomFinish(myColor === 'w' ? '1-0' : '0-1', 'timeout');
     else if (msg.t === 'ping' && typeof msg.id === 'string') relayPost(room, { t: 'pong', id: msg.id.slice(0, 20) }).catch(() => {});
     else if (msg.t === 'pong' && msg.id === room.pingId) room.pingId = null;
     else if (msg.t === 'draw-offer' && d.status === 'active' && msg.n === game.moves.length) { drawIncoming = game.moves.length; toast(names.opp + ' offers a draw.'); render(); }
@@ -2023,14 +2218,16 @@ button.avatar { cursor: pointer }
     else { st.removeProperty('--sq-light'); st.removeProperty('--sq-dark'); }
   }
   function paintThemes() {
-    const box = $('homeThemes'), cur = curTheme();
-    box.textContent = '';
-    BOARD_THEMES.filter(t => !t.admin || admin).forEach(t => {
-      const b = document.createElement('button'); b.className = 'swatch'; b.title = t.name; b.setAttribute('aria-label', t.name + ' board');
-      b.setAttribute('aria-pressed', t.id === cur.id);
-      for (let i = 0; i < 4; i++) { const q = document.createElement('i'); q.style.background = (i === 0 || i === 3) ? t.light : t.dark; b.appendChild(q); }
-      b.onclick = () => { prefs.boardTheme = t.id; store.set('cc-prefs', prefs); applyTheme(); paintThemes(); };
-      box.appendChild(b);
+    const cur = curTheme();
+    ['homeThemes', 'setThemes'].forEach(id => {
+      const box = $(id); box.textContent = '';
+      BOARD_THEMES.filter(t => !t.admin || admin).forEach(t => {
+        const b = document.createElement('button'); b.className = 'swatch'; b.title = t.name; b.setAttribute('aria-label', t.name + ' board');
+        b.setAttribute('aria-pressed', t.id === cur.id);
+        for (let i = 0; i < 4; i++) { const q = document.createElement('i'); q.style.background = (i === 0 || i === 3) ? t.light : t.dark; b.appendChild(q); }
+        b.onclick = () => { prefs.boardTheme = t.id; store.set('cc-prefs', prefs); applyTheme(); paintThemes(); };
+        box.appendChild(b);
+      });
     });
     $('themeName').textContent = cur.name + (cur.admin ? ' (admin)' : '');
   }
@@ -2217,7 +2414,7 @@ button.avatar { cursor: pointer }
   window.addEventListener('hashchange', checkHash);
 
   applyTheme(); paintName(); paintAdmin();
-  paintSound(); paintColorSeg(); newGame(); connect();
+  applySettings(); paintSound(); paintColorSeg(); newGame(); restoreGame(); connect();
   if (!prefs.name) askName();
   checkHash();
 })();
