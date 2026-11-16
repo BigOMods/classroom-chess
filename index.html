@@ -778,9 +778,9 @@ button.avatar { cursor: pointer }
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
 
-  const FRESH = { elo: 300, rd: 350, w: 0, l: 0, d: 0, v: 2 };
+  const FRESH = { elo: 300, rd: 110, w: 0, l: 0, d: 0, v: 3 };
   const savedProfile = store.get('cc-profile', {}); /* older saves are dropped: ratings restarted at 300 */
-  let profile = Object.assign({}, FRESH, savedProfile.v === 2 ? savedProfile : {});
+  let profile = Object.assign({}, FRESH, savedProfile.v === 3 ? savedProfile : {});
   let prefs = Object.assign({ sound: true, bot: 1, color: 'w', coach: 'maple' }, store.get('cc-prefs', {}));
   if (!(prefs.bot >= 0 && prefs.bot < BOTS.length)) prefs.bot = 1;
   let game = new E.Game();
@@ -1119,13 +1119,13 @@ button.avatar { cursor: pointer }
   /* Glicko-style rating, like the big chess sites: each player has a rating and an uncertainty (rd).
      New players start at 300 with a high rd, so early results move the rating a lot; it settles as rd shrinks. */
   function applyElo(opp, score) {
-    const q = Math.log(10) / 400, rd = profile.rd || 350, ord = opp.rd || 200;
+    const q = Math.log(10) / 400, rd = Math.min(profile.rd || 110, 110), ord = Math.min(opp.rd || 110, 200);
     const g = 1 / Math.sqrt(1 + 3 * q * q * ord * ord / (Math.PI * Math.PI));
     const exp = 1 / (1 + Math.pow(10, -g * (profile.elo - opp.elo) / 400));
     const inv = 1 / (rd * rd) + q * q * g * g * exp * (1 - exp);
     const next = Math.max(100, Math.round(profile.elo + (q / inv) * g * (score - exp)));
     const delta = next - profile.elo;
-    profile.elo = next; profile.rd = Math.max(50, Math.round(Math.sqrt(1 / inv) * 10) / 10);
+    profile.elo = next; profile.rd = Math.max(60, Math.round(Math.sqrt(1 / inv) * 10) / 10);
     if (score === 1) profile.w++; else if (score === 0) profile.l++; else profile.d++;
     saveProfile();
     return delta;
@@ -1532,7 +1532,7 @@ button.avatar { cursor: pointer }
   function saveProfile() {
     store.set('cc-profile', profile);
     if (!db || !canWrite || !myId) return;
-    const body = { elo: profile.elo, rd: profile.rd, w: profile.w, l: profile.l, d: profile.d, v: 2 };
+    const body = { elo: profile.elo, rd: profile.rd, w: profile.w, l: profile.l, d: profile.d, v: 3 };
     profileQ = profileQ.then(() => db.doc('players/' + myId).set(body)).catch(() => {});
   }
   async function resolveNames(ids) {
@@ -1914,13 +1914,13 @@ button.avatar { cursor: pointer }
     canWrite = can !== false;
     try {
       const mine = await db.doc('players/' + myId).get();
-      if (mine.exists && mine.data().v === 2) { Object.assign(profile, mine.data()); store.set('cc-profile', profile); }
-      else if (canWrite) await db.doc('players/' + myId).set({ elo: profile.elo, rd: profile.rd, w: profile.w, l: profile.l, d: profile.d, v: 2 });
+      if (mine.exists && mine.data().v === 3) { Object.assign(profile, mine.data()); store.set('cc-profile', profile); }
+      else if (canWrite) await db.doc('players/' + myId).set({ elo: profile.elo, rd: profile.rd, w: profile.w, l: profile.l, d: profile.d, v: 3 });
     } catch (e) { canWrite = false; }
     if (!canWrite) offline('You can watch the ladder, but playing classmates online needs contributor access to this page. Ask the person who shared it.');
     const slow = setTimeout(() => { if (canWrite) offline('The lobby is taking a while to answer. It will appear here when it connects.'); }, 10000);
     db.collection('players').orderBy('elo', 'desc').limit(25).onSnapshot(s => {
-      ladderRows = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderLadder();
+      ladderRows = s.docs.map(d => Object.assign({ id: d.id }, d.data())).filter(r => r.v === 3); renderLadder();
     }, () => {});
     if (canWrite) db.collection('games').where('status', 'in', ['open', 'active']).onSnapshot(s => {
       if (!s.metadata.fromCache) clearTimeout(slow);
