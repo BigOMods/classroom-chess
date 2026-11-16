@@ -173,6 +173,7 @@ button.avatar { cursor: pointer }
 .boardcol.reviewing { width: min(100%, 620px, calc(100vh - 375px)) }
 .modal { position: fixed; inset: 0; z-index: 40; background: rgba(10, 16, 19, .6); display: grid; place-items: center; padding: 16px }
 .modal .card { width: 100%; max-width: 580px; max-height: 92%; overflow-y: auto }
+.modal .card > * { flex-shrink: 0 }
 .coachcard { flex-direction: row; align-items: center; flex-wrap: wrap }
 .coachcard .t { flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column }
 .coachcard .t b { font: 700 17px var(--display) } .coachcard .t small { color: var(--muted); font-size: 13px }
@@ -207,6 +208,13 @@ button.avatar { cursor: pointer }
 .clk.low { color: var(--bad) } .clk.run.low { background: var(--bad); color: #fff; border-color: var(--bad) }
 .setrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; min-height: 34px }
 .setrow > span { min-width: 0 }
+.setrow.stack { flex-direction: column; align-items: flex-start; gap: 8px }
+#setModal .admin > b { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 4px }
+#setModal .admin > b:first-of-type { border-top: 0; padding-top: 0 }
+.tccustom { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap }
+.tccustom .inp { width: 4.6em; flex: 0 0 auto }
+.tccustom span { color: var(--muted) }
+select.inp { max-width: 100% }
 .setrow input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent) }
 .setrow input[type="range"] { accent-color: var(--accent); flex: 1 1 140px; max-width: 220px }
 select.inp { flex: 0 1 auto }
@@ -331,14 +339,14 @@ select.inp { flex: 0 1 auto }
             <button data-c="w" aria-pressed="true">White</button><button data-c="r" aria-pressed="false">Random</button><button data-c="b" aria-pressed="false">Black</button>
           </div>
         </div>
-        <div class="row"><label class="label" for="clockBot">Clock</label><select class="inp clocksel" id="clockBot"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option></select></div>
+        <div class="row"><label class="label" for="clockBot">Clock</label><select class="inp clocksel" id="clockBot"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option><option value="custom">Custom</option></select></div>
         <p class="note">Games against the computer are for practice and do not change your rating. Only games against classmates do.</p>
       </div>
 
       <div class="card" id="localCard" hidden>
         <h3>Pass &amp; play</h3>
         <p class="note">Two people share this screen and take turns. These games are not rated.</p>
-        <div class="row"><label class="label" for="clockLocal">Clock</label><select class="inp clocksel" id="clockLocal"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option></select></div>
+        <div class="row"><label class="label" for="clockLocal">Clock</label><select class="inp clocksel" id="clockLocal"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option><option value="custom">Custom</option></select></div>
       </div>
 
       <div class="card" id="lobbyCard" hidden>
@@ -347,7 +355,7 @@ select.inp { flex: 0 1 auto }
         <div class="roombox" id="roomBox" hidden>
           <div id="roomSetup" class="roombox">
             
-            <div class="row"><label class="label" for="clockRoom">Clock for rooms you create</label><select class="inp clocksel" id="clockRoom"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option></select></div>
+            <div class="row"><label class="label" for="clockRoom">Clock for rooms you create</label><select class="inp clocksel" id="clockRoom"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option><option value="custom">Custom</option></select></div>
             <div class="row"><button class="btn primary" id="roomCreate">Create a room</button></div>
             <p class="note msg-bad" id="roomErr" hidden></p>
             <div class="row"><input class="inp" id="roomCode" maxlength="5" placeholder="Room code" autocomplete="off" aria-label="Room code"><button class="btn" id="roomJoin">Join room</button></div>
@@ -426,7 +434,7 @@ select.inp { flex: 0 1 auto }
     <h3 id="setHead">Settings</h3>
     <b>Look</b>
     <div class="setrow"><span>Page theme</span><div class="seg" id="setTheme"><button data-v="system">System</button><button data-v="light">Light</button><button data-v="dark">Dark</button></div></div>
-    <div class="setrow"><span>Board colours</span><div class="row" id="setThemes"></div></div>
+    <div class="setrow stack"><span>Board colours</span><div class="row" id="setThemes"></div></div>
     <div class="setrow"><span>Piece movement</span><div class="seg" id="setAnim"><button data-v="off">Instant</button><button data-v="normal">Normal</button><button data-v="slow">Slow</button></div></div>
     <label class="setrow" for="setCoords"><span>Show board coordinates</span><input type="checkbox" id="setCoords"></label>
     <label class="setrow" for="setDots"><span>Show legal moves</span><input type="checkbox" id="setDots"></label>
@@ -434,7 +442,7 @@ select.inp { flex: 0 1 auto }
     <b>Playing</b>
     <label class="setrow" for="setQueen"><span>Always promote to a queen</span><input type="checkbox" id="setQueen"></label>
     <label class="setrow" for="setConfirm"><span>Confirm before resigning</span><input type="checkbox" id="setConfirm"></label>
-    <div class="setrow"><label for="setClock">Clock for new games</label><select class="inp clocksel" id="setClock"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option></select></div>
+    <div class="setrow"><label for="setClock">Clock for new games</label><select class="inp clocksel" id="setClock"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option><option value="custom">Custom</option></select></div>
     <b>Sound</b>
     <label class="setrow" for="setSound"><span>Sound effects</span><input type="checkbox" id="setSound"></label>
     <div class="setrow"><label for="setVol">Volume</label><input type="range" id="setVol" min="0" max="100" step="5"></div>
@@ -1407,7 +1415,19 @@ select.inp { flex: 0 1 auto }
   function paintSettings() {
     CHECKS.forEach(([id, k]) => { $(id).checked = prefs[k] !== false; });
     SEGS.forEach(([id, k]) => $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === prefs[k])));
-    document.querySelectorAll('.clocksel').forEach(el => { el.value = TCS.includes(prefs.clock) ? prefs.clock : 'none'; });
+    if (!validTc(prefs.clock)) prefs.clock = 'none';
+    const custom = prefs.clock !== 'none' && !TCS.includes(prefs.clock);
+    document.querySelectorAll('.clocksel').forEach(el => {
+      el.value = custom ? 'custom' : prefs.clock;
+      const box = el.nextElementSibling;
+      if (!box || !box.classList.contains('tccustom')) return;
+      box.hidden = !custom;
+      if (custom) {
+        const [m, i] = prefs.clock.split('+'), mi = box.querySelector('.tcmin'), ii = box.querySelector('.tcinc');
+        if (document.activeElement !== mi) mi.value = m;
+        if (document.activeElement !== ii) ii.value = i;
+      }
+    });
     $('setVol').value = prefs.vol;
     $('setVol').disabled = !prefs.sound;
     $('setName').textContent = 'Playing as ' + (prefs.name || 'no name yet');
@@ -1416,17 +1436,28 @@ select.inp { flex: 0 1 auto }
   SEGS.forEach(([id, k]) => $(id).querySelectorAll('button').forEach(b => { b.onclick = () => { prefs[k] = b.dataset.v; savePrefs(); applySettings(); paintSettings(); }; }));
   $('setVol').oninput = () => { prefs.vol = Number($('setVol').value); savePrefs(); };
   $('setVol').onchange = () => { audio(); sfx.move(); };
-  document.querySelectorAll('.clocksel').forEach(el => { el.onchange = () => {
-    prefs.clock = TCS.includes(el.value) ? el.value : 'none'; savePrefs(); paintSettings();
-    if ((mode === 'bot' || mode === 'local') && !inProgress() && !finished) newGame();
-  }; });
+  const curCustom = () => (validTc(prefs.customClock) && prefs.customClock !== 'none' && !TCS.includes(prefs.customClock) ? prefs.customClock : '7+3');
+  function clockChanged() { savePrefs(); paintSettings(); if ((mode === 'bot' || mode === 'local') && !inProgress() && !finished) newGame(); }
+  document.querySelectorAll('.clocksel').forEach(el => {
+    const box = document.createElement('span'); box.className = 'tccustom'; box.hidden = true;
+    box.innerHTML = '<input class="inp tcmin" type="number" min="1" max="180" step="1" aria-label="Minutes for each player"><span>min +</span><input class="inp tcinc" type="number" min="0" max="60" step="1" aria-label="Seconds added after each move"><span>sec a move</span>';
+    el.after(box);
+    el.onchange = () => { prefs.clock = el.value === 'custom' ? curCustom() : (TCS.includes(el.value) ? el.value : 'none'); clockChanged(); };
+    const upd = () => {
+      const m = Math.round(Number(box.querySelector('.tcmin').value)), i = Math.round(Number(box.querySelector('.tcinc').value));
+      if (!(m >= 1 && m <= 180) || !(i >= 0 && i <= 60)) return toast('Pick 1 to 180 minutes and 0 to 60 seconds a move.');
+      prefs.clock = prefs.customClock = m + '+' + i; clockChanged();
+    };
+    box.querySelectorAll('input').forEach(inp => { inp.onchange = upd; });
+  });
   $('setBtn').onclick = () => { paintSettings(); paintThemes(); $('setModal').hidden = false; };
   $('setDone').onclick = () => { $('setModal').hidden = true; };
   $('setModal').onclick = e => { if (e.target === $('setModal')) $('setModal').hidden = true; };
   $('setNameBtn').onclick = () => { $('setModal').hidden = true; askName(); };
 
   /* ---------- clocks ---------- */
-  function parseTc(tc) { if (!TCS.includes(tc) || tc === 'none') return null; const [m, i] = tc.split('+').map(Number); return { base: m * 60000, inc: i * 1000 }; }
+  function validTc(tc) { if (tc === 'none') return true; const m = /^(\d{1,3})\+(\d{1,2})$/.exec(String(tc)); return !!m && +m[1] >= 1 && +m[1] <= 180 && +m[2] <= 60; }
+  function parseTc(tc) { if (!validTc(tc) || tc === 'none') return null; const [m, i] = tc.split('+').map(Number); return { base: m * 60000, inc: i * 1000 }; }
   function settleClock() { if (clock && clock.running) { const now = performance.now(); clock[clock.running] -= now - clock.last; clock.last = now; } }
   function stopClock() { settleClock(); if (clock) clock.running = null; clearInterval(clockTimer); clockTimer = 0; paintClocks(); }
   function startClock(tc) {
@@ -2101,7 +2132,7 @@ select.inp { flex: 0 1 auto }
       room.opp = msg.from; room.connecting = false;
       setOpp(msg.hostColor, msg);
       myColor = msg.hostColor === 'w' ? 'b' : 'w'; flipped = myColor === 'b';
-      d[myColor] = 'me'; d[myColor + 'Elo'] = profile.elo; d.status = 'active'; startClock(TCS.includes(msg.tc) ? msg.tc : 'none');
+      d[myColor] = 'me'; d[myColor + 'Elo'] = profile.elo; d.status = 'active'; startClock(validTc(msg.tc) ? msg.tc : 'none');
       sfx.start(); render();
     } else if (msg.t === 'offer' && !room.host && msg.to === room.me && typeof msg.sdp === 'string' && !room.pc) joinAnswer(room, msg.sdp);
     else if (msg.t === 'answer' && room.host && msg.to === room.me && typeof msg.sdp === 'string' && room.pc && !room.pc.currentRemoteDescription) {
