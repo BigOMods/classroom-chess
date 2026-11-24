@@ -202,6 +202,9 @@ button.avatar { cursor: pointer }
 .swatch[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) }
 .swatch i { display: block }
 .namebtn { max-width: 11em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.sq.pre::before { content: ""; position: absolute; inset: 0; background: rgba(214, 67, 47, .55) }
+.stakes { font-variant-numeric: tabular-nums } .stakes b { margin-right: 12px } .stakes .up { color: var(--good) } .stakes .down { color: var(--bad) }
+.bubble .own { display: block; margin-top: 5px; color: var(--muted) }
 .board.nocoords .co { display: none }
 .clk { margin-left: 8px; font: 700 16px var(--display); font-variant-numeric: tabular-nums; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 9px; min-width: 4.2em; text-align: center }
 .clk.run { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
@@ -232,6 +235,7 @@ select.inp { flex: 0 1 auto }
     <nav class="nav" aria-label="Sections">
       <button data-go="home" aria-current="page">Home</button>
       <button data-go="bot">Computer</button>
+      <button data-go="coach">Coach</button>
       <button data-go="online">Online</button>
       <button data-go="local">Pass &amp; play</button>
       <button data-go="puzzle">Puzzles</button>
@@ -271,6 +275,7 @@ select.inp { flex: 0 1 auto }
     <div class="modegrid">
       <button class="modecard" data-go="bot"><span class="g" aria-hidden="true">&#9822;&#xFE0E;</span><span class="t"><b>Play the computer</b><small>Fourteen opponents, from beginner to strong.</small></span><span class="tag">Practice</span></button>
       <button class="modecard" data-go="online"><span class="g" aria-hidden="true">&#9819;&#xFE0E;</span><span class="t"><b>Play a classmate</b><small>Play a friend online and move your rating.</small></span><span class="tag">Rated</span></button>
+      <button class="modecard" data-go="coach"><span class="g" aria-hidden="true">&#9821;&#xFE0E;</span><span class="t"><b>Play your coach</b><small>Your coach plays you and comments on every move.</small></span><span class="tag">Learn</span></button>
       <button class="modecard" data-go="local"><span class="g" aria-hidden="true">&#9823;&#xFE0E;</span><span class="t"><b>Pass &amp; play</b><small>Two people take turns on this screen.</small></span><span class="tag">Practice</span></button>
       <button class="modecard" data-go="puzzle"><span class="g" aria-hidden="true">&#9820;&#xFE0E;</span><span class="t"><b>Puzzles</b><small>Easy to expert, with your own puzzle rating.</small></span><span class="tag" id="pzTag">Train</span></button>
     </div>
@@ -282,6 +287,10 @@ select.inp { flex: 0 1 auto }
 
   <main>
     <div class="boardcol" id="boardCol">
+      <div class="rvbar" id="vsBar" hidden>
+        <div class="coach"><button class="avatar" id="vsAv" aria-label="Change coach"></button><div class="bubble" id="vsSay" aria-live="polite"></div></div>
+        <div class="row"><button class="btn" id="vsHint">Hint</button><button class="btn" id="vsBack">Take back</button><button class="btn" id="vsCoach">Change coach</button></div>
+      </div>
       <div class="rvbar" id="rvBar" hidden>
         <div class="coach"><button class="avatar" id="coachAv" aria-label="Change coach"></button><div class="bubble" id="coachSay" aria-live="polite"></div></div>
         <div class="row">
@@ -310,6 +319,7 @@ select.inp { flex: 0 1 auto }
       <div class="card">
         <h3 id="gameTitle">Game</h3>
         <div class="status" id="status" aria-live="polite">Your move.</div>
+        <p class="note stakes" id="stakes" hidden></p>
         <div class="row" id="drawAsk" hidden><span class="label" id="drawAskTxt"></span><button class="btn primary" id="drawYes">Accept draw</button><button class="btn" id="drawNo">Decline</button></div>
         <div class="moves" id="moves"></div>
         <div class="row">
@@ -336,11 +346,19 @@ select.inp { flex: 0 1 auto }
         <table class="sum" id="reviewSum"></table>
       </div>
 
+      <div class="card" id="coachCard" hidden>
+        <h3>Play your coach</h3>
+        <div class="row"><span class="label">Strength</span><div class="seg" id="coachLvl"><button data-v="0">Easy</button><button data-v="1">Medium</button><button data-v="2">Hard</button><button data-v="3">Full</button></div></div>
+        <div class="row"><span class="label">Play as</span><div class="seg colorseg"><button data-c="w">White</button><button data-c="r">Random</button><button data-c="b">Black</button></div></div>
+        <div class="row"><label class="label" for="clockCoach">Clock</label><select class="inp clocksel" id="clockCoach"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option><option value="custom">Custom</option></select></div>
+        <p class="note">Your coach rates each move you make, explains mistakes and warns you about threats. Take back lets you try a move again. These games are not rated.</p>
+      </div>
+
       <div class="card" id="botCard">
         <h3>Choose an opponent</h3>
         <div class="bots" id="bots"></div>
         <div class="row"><span class="label">Play as</span>
-          <div class="seg" id="colorSeg">
+          <div class="seg colorseg" id="colorSeg">
             <button data-c="w" aria-pressed="true">White</button><button data-c="r" aria-pressed="false">Random</button><button data-c="b" aria-pressed="false">Black</button>
           </div>
         </div>
@@ -447,6 +465,7 @@ select.inp { flex: 0 1 auto }
     <label class="setrow" for="setHi"><span>Highlight the last move</span><input type="checkbox" id="setHi"></label>
     <b>Playing</b>
     <label class="setrow" for="setQueen"><span>Always promote to a queen</span><input type="checkbox" id="setQueen"></label>
+    <label class="setrow" for="setPre"><span>Premoves (move on your opponent's turn)</span><input type="checkbox" id="setPre"></label>
     <label class="setrow" for="setConfirm"><span>Confirm before resigning</span><input type="checkbox" id="setConfirm"></label>
     <div class="setrow"><label for="setClock">Clock for new games</label><select class="inp clocksel" id="setClock"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option><option value="custom">Custom</option></select></div>
     <b>Sound</b>
@@ -945,14 +964,14 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   const FRESH = { elo: 300, rd: 110, w: 0, l: 0, d: 0, v: 3 };
   const savedProfile = store.get('cc-profile', {}); /* older saves are dropped: ratings restarted at 300 */
   let profile = Object.assign({}, FRESH, savedProfile.v === 3 ? savedProfile : {});
-  let prefs = Object.assign({ sound: true, bot: 1, color: 'w', coach: 'maple', vol: 70, anim: 'normal', dots: true, coords: true, hiLast: true, autoQueen: false, confirmResign: true, uiTheme: 'system', clock: 'none' }, store.get('cc-prefs', {}));
+  let prefs = Object.assign({ sound: true, bot: 1, color: 'w', coach: 'maple', vol: 70, anim: 'normal', dots: true, coords: true, hiLast: true, autoQueen: false, confirmResign: true, premove: true, coachLvl: 1, uiTheme: 'system', clock: 'none' }, store.get('cc-prefs', {}));
   if (!(prefs.bot >= 0 && prefs.bot < BOTS.length)) prefs.bot = 1;
   let game = new E.Game();
   let mode = 'bot', myColor = 'w', flipped = false, selected = -1, lastMove = null;
   let finished = false, thinking = false, botTimer = 0, drag = null, endInfo = null;
   let review = null, reviewToken = 0;
   const ADMIN_HASH = 'dd7ee760ac043fb45203d43fe2599aa9177603cd108fb8cd77a3071c6356f288';
-  let drawSentAt = -1, drawIncoming = -1, leaveArmed = 0, clock = null, clockTimer = 0;
+  let drawSentAt = -1, drawIncoming = -1, leaveArmed = 0, clock = null, clockTimer = 0, coachGame = false, vs = null, vsHintState = null, premove = null;
   const pendingSave = store.get('cc-save', null);
   const TCS = ['none', '1+0', '3+0', '3+2', '5+0', '10+0', '15+10'];
   let admin = store.get('cc-admin', false) === true, amOwner = false, hintCache = { key: '', m: null };
@@ -1054,12 +1073,13 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     return toSq(row * 8 + c);
   }
   function renderSquares() {
-    const targets = selected >= 0 ? game.legalFrom(selected) : [];
+    const targets = selected < 0 ? [] : canPremove() ? preTargets(selected) : game.legalFrom(selected);
     const vs = view(), kingInCheck = E.inCheck(vs) ? vs.b.indexOf(vs.turn === 'w' ? 'K' : 'k') : -1;
     for (let i = 0; i < 64; i++) {
       const sq = toSq(i), el = sqEls[i];
       let cls = 'sq' + (((i >> 3) + (i & 7)) % 2 ? ' dark' : '');
       if (prefs.hiLast !== false && lastMove && (lastMove.from === sq || lastMove.to === sq)) cls += ' hi';
+      if (premove && (premove.from === sq || premove.to === sq)) cls += ' pre';
       if (sq === selected) cls += ' sel';
       if (sq === kingInCheck) cls += ' chk';
       const t = targets.find(m => m.to === sq);
@@ -1104,6 +1124,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       $('liveEvalFill').style.width = winPct(ev) + '%';
       $('liveEvalTxt').textContent = hintCache.pending && !hintCache.depth ? 'Thinking\u2026' : Math.abs(ev) >= 90000 ? 'Checkmate' : Math.abs(ev) < 15 ? 'Even' : (ev > 0 ? 'White +' : 'Black +') + (Math.min(Math.abs(ev), 2000) / 100).toFixed(1);
     }
+    if (vsHintState && vsHintState.level === 2 && vsHintState.m && vsHintState.key === E.toFen(game.s)) piecesEl.appendChild(arrowSvg(vsHintState.m.from, vsHintState.m.to, 'rgba(46,157,87,.85)'));
     if (review && review.ready && review.idx > 0) drawReviewMarks();
   }
 
@@ -1119,7 +1140,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   const names = {};
   function sideInfo(color) {
     if (mode === 'local' || mode === 'puzzle') return { name: color === 'w' ? 'White' : 'Black', elo: '' };
-    if (mode === 'bot') return color === myColor ? { name: prefs.name || 'You', elo: profile.elo } : { name: BOTS[botLevel].name, elo: BOTS[botLevel].elo };
+    if (mode === 'bot') return color === myColor ? { name: prefs.name || 'You', elo: profile.elo } : { name: foe().name, elo: foe().elo };
     const d = og && og.data;
     if (!d) return { name: color === 'w' ? 'White' : 'Black', elo: '' };
     const id = d[color];
@@ -1170,7 +1191,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     else if (mode === 'online' && (!og.data || og.data.status === 'open')) s = 'Waiting for a classmate to join…';
     else if (mode === 'local') s = (game.s.turn === 'w' ? 'White' : 'Black') + ' to move.';
     else if (game.s.turn === myColor) s = game.inCheck() ? 'You are in check.' : 'Your move.';
-    else s = mode === 'bot' ? BOTS[botLevel].name + ' is thinking…' : 'Waiting for your opponent…';
+    else s = mode === 'bot' ? foe().name + ' is thinking…' : 'Waiting for your opponent…';
     $('status').textContent = s;
     const main = $('mainBtn');
     if (mode === 'online') {
@@ -1193,13 +1214,13 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     $('drawAsk').hidden = !asked;
     if (asked) $('drawAskTxt').textContent = sideInfo(myColor === 'w' ? 'b' : 'w').name + ' offers a draw.';
     $('undoBtn').disabled = !game.moves.length;
-    $('gameTitle').textContent = mode === 'bot' ? 'You vs ' + BOTS[botLevel].name : mode === 'local' ? 'Pass & play' : mode === 'online' ? 'Online game' : 'Puzzle';
+    $('gameTitle').textContent = mode === 'bot' ? 'You vs ' + foe().name : mode === 'local' ? 'Pass & play' : mode === 'online' ? 'Online game' : 'Puzzle';
     $('puzzleCard').hidden = mode !== 'puzzle' || !!review;
     if (mode === 'puzzle') renderPuzzleCard();
     renderHome(); renderRooms();
     $('reviewBtn').hidden = !finished || game.moves.length < 2 || !!review;
-    $('reviewCard').hidden = !review; $('rvBar').hidden = !review; $('boardCol').classList.toggle('reviewing', !!review);
-    $('botCard').hidden = mode !== 'bot' || !!review;
+    $('reviewCard').hidden = !review; $('rvBar').hidden = !review; $('boardCol').classList.toggle('reviewing', !!review || (mode === 'bot' && coachGame)); renderVs(); renderStakes();
+    $('botCard').hidden = mode !== 'bot' || coachGame || !!review; $('coachCard').hidden = mode !== 'bot' || !coachGame || !!review;
     $('localCard').hidden = mode !== 'local' || !!review;
     $('lobbyCard').hidden = mode !== 'online' || !!review;
     $('ladderCard').hidden = !!review || !(db && (mode === 'online' || ladderRows.length));
@@ -1217,7 +1238,34 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     if (mode === 'online' && !(og && og.data && og.data.status === 'active')) return false;
     return game.s.turn === myColor;
   }
+  function canPremove() {
+    return prefs.premove !== false && !review && !finished && $('promoOv').hidden && game.s.turn !== myColor &&
+      (mode === 'bot' || (mode === 'online' && !!og && !!og.data && og.data.status === 'active'));
+  }
+  /* where a piece could go if it were my turn, counting squares my own pieces stand on (to take back) */
+  function preTargets(from) {
+    const st = Object.assign({}, game.s, { turn: myColor, ep: -1 }), out = E.legal(st).filter(m => m.from === from);
+    st.b.forEach((q, sq) => {
+      if (!q || sq === from || E.colorOf(q) !== myColor || q.toLowerCase() === 'k') return;
+      const b = st.b.slice(); b[sq] = myColor === 'w' ? 'p' : 'P';
+      E.legal(Object.assign({}, st, { b })).forEach(m => { if (m.from === from && m.to === sq) out.push(m); });
+    });
+    return out;
+  }
+  function runPremove() {
+    const pm = premove; premove = null;
+    if (!pm) return;
+    if (!canMove() || game.s.turn !== myColor) return render();
+    const opts = game.legalFrom(pm.from).filter(m => m.to === pm.to);
+    if (!opts.length) { toast('Your premove was not possible.'); return render(); }
+    commit(opts.find(m => m.promo === 'q') || opts[0], true);
+  }
   function tryMove(from, to, slide) {
+    if (canPremove()) {
+      if (!preTargets(from).some(m => m.to === to)) return false;
+      premove = { from, to }; selected = -1; render();
+      return true;
+    }
     const opts = game.legalFrom(from).filter(m => m.to === to);
     if (!opts.length) return false;
     if (opts.length === 1) { commit(opts[0], slide); return true; }
@@ -1237,11 +1285,13 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   }
   function commit(m, slide, remote) {
     if (mode === 'puzzle') return puzzleMove(m, slide, false);
-    const rec = game.play(m);
-    lastMove = m; selected = -1;
+    const before = game.s, rec = game.play(m);
+    lastMove = m; selected = -1; vsHintState = null;
     clockAfterMove();
+    if (mode === 'bot' && coachGame) { if (before.turn === myColor) vsJudge(before, m, rec); else vsOwn(m, rec); }
     moveSound(rec);
     render(slide ? m : null);
+    if (premove && game.s.turn === myColor && (mode === 'bot' || mode === 'online')) setTimeout(runPremove, 60);
     if (mode === 'online') { if (!remote) pushMove(); return; }
     const st = game.status();
     if (st.over) return finish(st.result, st.reason);
@@ -1251,7 +1301,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     thinking = true; renderStatus();
     const level = botLevel;
     botTimer = setTimeout(() => {
-      const m = E.bestMove(game.s, BOTS[level].ai);
+      const m = E.bestMove(game.s, foe().ai);
       thinking = false;
       if (m && mode === 'bot' && !finished) commit(m, true);
     }, admin && prefs.adFast ? 80 : 450 + Math.random() * 350);
@@ -1261,10 +1311,12 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     if (e.button > 0 || !$('bannerOv').hidden || !$('promoOv').hidden) return;
     audio();
     const sq = sqAt(e.clientX, e.clientY);
-    if (sq < 0 || !canMove()) return;
+    const pre = canPremove();
+    if (sq < 0 || !(canMove() || pre)) return;
+    if (pre && premove && selected < 0) { premove = null; renderSquares(); }
     if (selected >= 0 && selected !== sq && tryMove(selected, sq, true)) return;
     const p = game.s.b[sq];
-    if (p && E.colorOf(p) === game.s.turn) {
+    if (p && E.colorOf(p) === (pre ? myColor : game.s.turn)) {
       selected = sq; renderSquares();
       const el = piecesEl.querySelector('[data-sq="' + sq + '"]');
       if (el) { drag = { from: sq, el, moved: false, x: e.clientX, y: e.clientY }; try { board.setPointerCapture(e.pointerId); } catch (err) {} }
@@ -1288,16 +1340,36 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   }
   board.addEventListener('pointerup', endDrag);
   board.addEventListener('pointercancel', endDrag);
+  board.addEventListener('contextmenu', e => { if (premove) { e.preventDefault(); premove = null; renderSquares(); } });
 
   /* ---------- results and rating ---------- */
   /* Glicko-style rating, like the big chess sites: each player has a rating and an uncertainty (rd).
      New players start at 300 with a high rd, so early results move the rating a lot; it settles as rd shrinks. */
-  function applyElo(opp, score) {
+  function eloAfter(opp, score) {
     const q = Math.log(10) / 400, rd = Math.min(profile.rd || 110, 110), ord = Math.min(opp.rd || 110, 200);
     const g = 1 / Math.sqrt(1 + 3 * q * q * ord * ord / (Math.PI * Math.PI));
     const exp = 1 / (1 + Math.pow(10, -g * (profile.elo - opp.elo) / 400));
     const inv = 1 / (rd * rd) + q * q * g * g * exp * (1 - exp);
-    const next = Math.max(100, Math.round(profile.elo + (q / inv) * g * (score - exp)));
+    return { next: Math.max(100, Math.round(profile.elo + (q / inv) * g * (score - exp))), inv };
+  }
+  function renderStakes() {
+    const el = $('stakes'), put = (label, d) => {
+      const sp = document.createElement('span'), b = document.createElement('b');
+      b.textContent = (d > 0 ? '+' : d < 0 ? '\u2212' : '') + Math.abs(d); b.className = d > 0 ? 'up' : d < 0 ? 'down' : '';
+      sp.append(label + ' ', b); el.append(sp);
+    };
+    el.textContent = ''; el.hidden = true;
+    if (review) return;
+    if (finished && endInfo) {
+      if (endInfo.delta != null) { el.hidden = false; el.append('Rating ' + endInfo.from + ' \u2192 ' + profile.elo + ' '); put('', endInfo.delta); }
+    } else if (mode === 'online' && og && og.data && og.data.status === 'active') {
+      const o = myColor === 'w' ? 'b' : 'w', opp = { elo: og.data[o + 'Elo'] || 300, rd: og.data[o + 'Rd'] || 200 };
+      el.hidden = false;
+      put('Win', eloAfter(opp, 1).next - profile.elo); put('Draw', eloAfter(opp, .5).next - profile.elo); put('Loss', eloAfter(opp, 0).next - profile.elo);
+    }
+  }
+  function applyElo(opp, score) {
+    const { next, inv } = eloAfter(opp, score);
     const delta = next - profile.elo;
     profile.elo = next; profile.rd = Math.max(60, Math.round(Math.sqrt(1 / inv) * 10) / 10);
     if (score === 1) profile.w++; else if (score === 0) profile.l++; else profile.d++;
@@ -1306,7 +1378,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   }
   function finish(result, reason, oppElo) {
     if (finished) return;
-    finished = true; thinking = false; clearTimeout(botTimer); stopClock();
+    finished = true; thinking = false; premove = null; clearTimeout(botTimer); stopClock();
     let title, delta = null;
     const winner = result === '1-0' ? 'w' : result === '0-1' ? 'b' : null;
     if (mode === 'local') {
@@ -1318,7 +1390,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       if (oppElo != null) delta = applyElo(oppElo, score);
       (score === 1 ? sfx.win : score === 0 ? sfx.lose : sfx.draw)();
     }
-    endInfo = { title };
+    endInfo = { title, delta, from: delta === null ? null : profile.elo - delta };
     $('bannerTitle').textContent = title;
     $('bannerSub').textContent = delta === null ? (mode === 'online' ? '' : 'Unrated game.') : 'Your rating is now ' + profile.elo + '.';
     const dEl = $('bannerDelta');
@@ -1334,7 +1406,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   let botLevel = prefs.bot;
   function newGame() {
     drawSentAt = drawIncoming = -1;
-    startClock('none');
+    startClock('none'); vs = null; vsHintState = null; premove = null;
     if (mode === 'puzzle') return loadPuzzle(pz.level);
     puzzle = null;
     clearTimeout(botTimer); thinking = false; finished = false; endInfo = null; selected = -1; lastMove = null; review = null; reviewToken++;
@@ -1350,13 +1422,15 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     if (mode === 'bot' && myColor === 'b') botTurn();
   }
   function setMode(m) {
-    if (m === mode) return;
+    const wantCoach = m === 'coach';
+    if (wantCoach) m = 'bot';
+    if (m === mode && (m !== 'bot' || wantCoach === coachGame)) return;
     if (mode === 'online' && og && og.p2p && og.data.status === 'active' && !(leaveArmed && Date.now() - leaveArmed < 4000)) {
       leaveArmed = Date.now(); toast('Leaving now counts as a loss. Click again to leave.'); return;
     }
     leaveArmed = 0;
     if (mode === 'online') closeOnline();
-    mode = m;
+    mode = m; coachGame = wantCoach;
     newGame();
   }
 
@@ -1368,14 +1442,14 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     el.onclick = () => { prefs.bot = i; store.set('cc-prefs', prefs); newGame(); };
     $('bots').appendChild(el);
   });
-  function paintColorSeg() { document.querySelectorAll('#colorSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.c === prefs.color)); }
-  document.querySelectorAll('#colorSeg button').forEach(b => b.onclick = () => {
+  function paintColorSeg() { document.querySelectorAll('.colorseg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.c === prefs.color)); }
+  document.querySelectorAll('.colorseg button').forEach(b => b.onclick = () => {
     prefs.color = b.dataset.c; store.set('cc-prefs', prefs); paintColorSeg();
     if (mode === 'bot' && !inProgress()) newGame();
   });
   function show(screen) {
     $('homeScreen').hidden = screen !== 'home'; $('gameScreen').hidden = screen !== 'game';
-    const cur = screen === 'home' ? 'home' : mode;
+    const cur = screen === 'home' ? 'home' : mode === 'bot' && coachGame ? 'coach' : mode;
     document.querySelectorAll('.nav button').forEach(b => { if (b.dataset.go === cur) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     if (screen === 'home') { $('continueBtn').hidden = mode === 'puzzle' || !(game.moves.length || og); renderHome(); }
     else render();
@@ -1397,7 +1471,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     $('pzTag').textContent = solved + '/' + total;
     const canContinue = mode !== 'puzzle' && !finished && !!(game.moves.length || og);
     $('continueBtn').hidden = !canContinue;
-    if (canContinue) $('continueBtn').textContent = mode === 'bot' ? 'Continue your game vs ' + BOTS[botLevel].name : mode === 'local' ? 'Continue your pass and play game' : 'Back to your online game';
+    if (canContinue) $('continueBtn').textContent = mode === 'bot' ? 'Continue your game vs ' + foe().name : mode === 'local' ? 'Continue your pass and play game' : 'Back to your online game';
     paintThemes();
     const hc = coach(); $('hcAv').textContent = glyph(hc.glyph); $('hcAv').style.background = hc.color; $('hcName').textContent = hc.name; $('hcTag').textContent = hc.tag;
   }
@@ -1563,7 +1637,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     root.style.setProperty('--slide', prefs.anim === 'off' ? '0s' : prefs.anim === 'slow' ? '.32s' : '.16s');
     board.classList.toggle('nocoords', prefs.coords === false);
   }
-  const CHECKS = [['setCoords', 'coords'], ['setDots', 'dots'], ['setHi', 'hiLast'], ['setQueen', 'autoQueen'], ['setConfirm', 'confirmResign'], ['setSound', 'sound']];
+  const CHECKS = [['setCoords', 'coords'], ['setDots', 'dots'], ['setHi', 'hiLast'], ['setQueen', 'autoQueen'], ['setConfirm', 'confirmResign'], ['setPre', 'premove'], ['setSound', 'sound']];
   const SEGS = [['setTheme', 'uiTheme'], ['setAnim', 'anim']];
   function paintSettings() {
     CHECKS.forEach(([id, k]) => { $(id).checked = prefs[k] !== false; });
@@ -1673,7 +1747,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     try {
       if (game.moves.length && !finished && !review) {
         settleClock();
-        localStorage.setItem('cc-save', JSON.stringify({ mode, moves: game.moves.map(m => m.uci), myColor, bot: botLevel, fen: E.toFen(game.states[0]),
+        localStorage.setItem('cc-save', JSON.stringify({ mode, moves: game.moves.map(m => m.uci), myColor, bot: botLevel, coach: coachGame, fen: E.toFen(game.states[0]),
           clock: clock ? { w: Math.round(clock.w), b: Math.round(clock.b), inc: clock.inc } : null }));
       } else localStorage.removeItem('cc-save');
     } catch (e) {}
@@ -1687,7 +1761,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       if (g.status().over) throw new Error('finished');
       mode = sv.mode; game = g;
       myColor = sv.myColor === 'b' ? 'b' : 'w';
-      botLevel = BOTS[sv.bot] ? sv.bot : 1;
+      botLevel = BOTS[sv.bot] ? sv.bot : 1; coachGame = mode === 'bot' && !!sv.coach;
       flipped = mode === 'bot' && myColor === 'b';
       finished = false; endInfo = null; selected = -1;
       const last = g.moves[g.moves.length - 1]; lastMove = last ? last.move : null;
@@ -1700,6 +1774,109 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     if (clock && !clock.running) runClock(game.s.turn);
     if (mode === 'bot' && game.s.turn !== myColor && !thinking) botTurn();
   }
+
+  /* ---------- play your coach ---------- */
+  const COACH_LEVELS = [{ i: 1, elo: 300 }, { i: 7, elo: 900 }, { i: 10, elo: 1300 }, { i: 13, elo: 1800 }];
+  function foe() {
+    if (!coachGame) return BOTS[botLevel];
+    const l = COACH_LEVELS[prefs.coachLvl] || COACH_LEVELS[1];
+    return { name: coach().name, elo: l.elo, ai: BOTS[l.i].ai };
+  }
+  let vsWorker = null, vsJob = 0;
+  const VS_SRC = 'self.onmessage=function(e){var E=self.ChessEngine,d=e.data,s=E.fromFen(d.fen),a=E.think(s,d.ms,20),o={id:d.id,best:E.uci(a.move),bestScore:a.score,played:a.score,reply:null};' +
+    'if(d.uci){var m=E.legal(s).filter(function(x){return E.uci(x)===d.uci})[0],n=m.next;if(!E.legal(n).length)o.played=E.inCheck(n)?100000:0;else{var b=E.think(n,d.ms,20);o.reply=E.uci(b.move);o.played=-b.score}}self.postMessage(o)};';
+  const vsWait = {};
+  function vsAsk(fen, uci, cb) {
+    const id = ++vsJob; vsWait[id] = cb;
+    if (!vsWorker) {
+      vsWorker = new Worker(URL.createObjectURL(new Blob(['(' + ChessEngineFactory.toString() + ')(self);' + VS_SRC], { type: 'text/javascript' })));
+      vsWorker.onmessage = e => { const f = vsWait[e.data.id]; delete vsWait[e.data.id]; if (f) f(e.data); };
+    }
+    vsWorker.postMessage({ id, fen, uci, ms: 600 });
+  }
+  function vsWhy(m, n) {
+    const t = m.piece.toLowerCase();
+    if (m.flag === 'castleK' || m.flag === 'castleQ') return ' Castling gets your king safe.';
+    if (m.captured) return ' You won a ' + PIECE[m.captured.toLowerCase()] + ', so count what I can take back.';
+    if (n <= 16 && (t === 'n' || t === 'b')) return ' Getting your pieces out early is a good habit.';
+    if (n <= 8 && t === 'p' && [27, 28, 35, 36].includes(m.to)) return ' Pawns in the centre give your pieces room.';
+    return '';
+  }
+  function vsJudge(before, m, rec) {
+    const c = coach(), token = {}, ply = game.moves.length;
+    vs = { token, text: 'Let me look at ' + rec.san + '…' };
+    const set = (cls, text) => { if (vs && vs.token === token) { vs.cls = cls; vs.text = text; renderVs(); } };
+    try {
+      vsAsk(E.toFen(before), rec.uci, d => {
+        const best = E.legal(before).find(x => E.uci(x) === d.best), same = d.best === rec.uci;
+        const drop = same ? 0 : Math.max(0, winPct(d.bestScore) - winPct(Math.min(d.bestScore, d.played)));
+        const cls = same || d.played >= 90000 ? 'best' : drop < 2 ? 'excellent' : drop < 5 ? 'good' : drop < 10 ? 'inaccuracy' : drop < 20 ? 'mistake' : 'blunder';
+        const bestSan = E.san(before, best), opts = c.say[cls];
+        let text = rec.san + '. ' + opts[ply % opts.length].replace('{b}', bestSan);
+        if (!CLS[cls].bad) text += vsWhy(m, ply);
+        else {
+          const r = d.reply && E.legal(m.next).find(x => E.uci(x) === d.reply), got = m.captured ? PVAL[m.captured.toLowerCase()] : 0;
+          if (d.bestScore >= 90000) text += ' It led to checkmate.';
+          else if (d.played <= -90000) text += ' Now I can force checkmate.';
+          else if (r && r.captured && PVAL[r.captured.toLowerCase()] > got) text += ' It lets me take your ' + PIECE[r.captured.toLowerCase()] + ' with ' + E.san(m.next, r) + '.';
+          else if (best.captured) text += ' That would have taken my ' + PIECE[best.captured.toLowerCase()] + '.';
+          text += ' You can take it back and try again.';
+        }
+        set(cls, text);
+      });
+    } catch (e) { set('', rec.san + '. I cannot check moves in this browser, but let us play on.'); }
+  }
+  function vsThreat() {
+    const st = Object.assign({}, game.s, { turn: myColor === 'w' ? 'b' : 'w', ep: -1 });
+    let top = null, gain = 0;
+    E.legal(st).forEach(x => {
+      if (!x.captured || x.captured.toLowerCase() === 'k') return;
+      const v = PVAL[x.captured.toLowerCase()], back = E.legal(x.next).some(r => r.to === x.to), g = back ? v - PVAL[x.piece.toLowerCase()] : v;
+      if (g > gain) { gain = g; top = x; }
+    });
+    return top;
+  }
+  function vsOwn(m, rec) {
+    if (!vs) vs = { text: '' };
+    if (game.status().over) { vs.own = ''; return; }
+    if (rec.check) vs.own = 'I played ' + rec.san + '. Check! Move your king, block, or take my piece.';
+    else {
+      const t = vsThreat();
+      vs.own = 'I played ' + rec.san + (m.captured ? ', taking your ' + PIECE[m.captured.toLowerCase()] : '') + '. ' +
+        (t ? 'Careful, I am now threatening your ' + PIECE[t.captured.toLowerCase()] + ' on ' + E.name(t.to) + '.' : 'What is your plan?');
+    }
+  }
+  function renderVs() {
+    const on = mode === 'bot' && coachGame && !review;
+    $('vsBar').hidden = !on;
+    if (!on) return;
+    const c = coach(), say = $('vsSay');
+    $('vsAv').textContent = glyph(c.glyph); $('vsAv').style.background = c.color;
+    document.querySelectorAll('#coachLvl button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === prefs.coachLvl));
+    $('vsHint').disabled = finished || thinking || game.s.turn !== myColor;
+    $('vsBack').disabled = !game.moves.some((x, i) => (E.colorOf(x.move.piece) === myColor));
+    say.textContent = '';
+    if (!vs) { say.textContent = 'Hello, I am ' + c.name + '. Play me and I will talk you through every move. ' + (myColor === 'w' ? 'You start.' : 'I will start.'); return; }
+    if (vs.cls) { const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = CLS[vs.cls].label; pill.style.background = 'var(--c-' + vs.cls + ')'; say.append(pill, document.createElement('br')); }
+    say.append(vs.text);
+    if (vs.own) { const o = document.createElement('span'); o.className = 'own'; o.textContent = vs.own; say.append(o); }
+  }
+  $('vsBack').onclick = takeBack;
+  $('vsHint').onclick = () => {
+    if (finished || thinking || game.s.turn !== myColor) return;
+    const key = E.toFen(game.s), tell = () => {
+      const h = vsHintState;
+      vs = h.level === 1 ? { text: 'Look at your ' + PIECE[h.m.piece.toLowerCase()] + ' on ' + E.name(h.m.from) + '. Press Hint again to see the move.' } : { text: 'I would play ' + E.san(game.s, h.m) + '.' };
+      if (h.level === 1) selected = h.m.from;
+      render();
+    };
+    if (vsHintState && vsHintState.key === key) { if (vsHintState.m) { vsHintState.level = 2; tell(); } return; }
+    const st = vsHintState = { key, m: null, level: 1 };
+    vs = { text: 'Let me think…' }; renderVs();
+    try { vsAsk(key, null, d => { if (vsHintState !== st) return; st.m = game.legal().find(x => E.uci(x) === d.best); if (st.m) tell(); }); }
+    catch (e) { vs = { text: 'I cannot give hints in this browser.' }; renderVs(); }
+  };
+  document.querySelectorAll('#coachLvl button').forEach(b => { b.onclick = () => { prefs.coachLvl = +b.dataset.v; store.set('cc-prefs', prefs); render(); }; });
 
   /* ---------- keyboard shortcuts ---------- */
   document.addEventListener('keydown', e => {
@@ -1880,7 +2057,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     const av = document.createElement('div'); av.className = 'avatar'; av.style.background = c.color; av.textContent = glyph(c.glyph);
     const tx = document.createElement('span'), nm = document.createElement('b'), tg = document.createElement('small');
     nm.textContent = c.name; tg.textContent = c.tag; tx.append(nm, tg); el.append(av, tx);
-    el.onclick = () => { prefs.coach = c.id; store.set('cc-prefs', prefs); $('coachModal').hidden = true; renderReview(); renderHome(); };
+    el.onclick = () => { prefs.coach = c.id; store.set('cc-prefs', prefs); $('coachModal').hidden = true; renderReview(); renderHome(); if (coachGame) render(); };
     $('coaches').appendChild(el);
   });
   $('reviewBtn').onclick = $('bannerReview').onclick = startReview;
@@ -1893,7 +2070,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     document.querySelectorAll('#coaches .coachpick').forEach(b => b.setAttribute('aria-pressed', b.dataset.id === coach().id));
     $('coachModal').hidden = false;
   };
-  $('rvCoach').onclick = $('coachAv').onclick = $('hcChange').onclick = openCoaches;
+  $('rvCoach').onclick = $('vsCoach').onclick = $('vsAv').onclick = $('coachAv').onclick = $('hcChange').onclick = openCoaches;
   $('coachClose').onclick = () => { $('coachModal').hidden = true; };
   $('coachModal').onclick = e => { if (e.target === $('coachModal')) $('coachModal').hidden = true; };
   document.addEventListener('keydown', e => {
@@ -2605,16 +2782,21 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   }
   const plainWin = sfx.win;
   sfx.win = () => { plainWin(); if (admin && prefs.adParty) confetti(); };
-  $('adUndo').onclick = () => {
-    if (mode !== 'bot' || !game.moves.length) return toast('Take back works in a computer game once a move has been made.');
+  function takeBack() {
+    if (mode !== 'bot' || !game.moves.length) { toast('Take back works in a computer game once a move has been made.'); return false; }
     clearTimeout(botTimer); thinking = false; finished = false; endInfo = null; review = null; reviewToken++;
+    vs = null; vsHintState = null; premove = null;
     $('bannerOv').hidden = true; $('adminModal').hidden = true;
     game.undo();
     if (game.moves.length && game.s.turn !== myColor) game.undo();
     const l = game.moves[game.moves.length - 1]; lastMove = l ? l.move : null; selected = -1;
+    if (coachGame) vs = { text: 'Good idea. Have another look at the whole board before you move.' };
     show('game');
+    if (clock) runClock(game.s.turn);
     if (game.s.turn !== myColor) botTurn();
-  };
+    return true;
+  }
+  $('adUndo').onclick = takeBack;
   $('adFenGo').onclick = () => {
     const fen = $('adFen').value.trim().replace(/\s+/g, ' ');
     let g = null;
@@ -2629,7 +2811,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     clearTimeout(botTimer); thinking = false;
     goTo('bot');
     game = g; myColor = g.s.turn; flipped = myColor === 'b'; lastMove = null; selected = -1; finished = false; endInfo = null;
-    render(); toast('Playing from your position against ' + BOTS[botLevel].name + '.');
+    render(); toast('Playing from your position against ' + foe().name + '.');
   };
   function gamePgn() {
     const start = game.states.length ? game.states[0] : game.s, fen = E.toFen(start), st = game.status(), res = st.over ? st.result : '*';
@@ -2665,8 +2847,8 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     drawSentAt = game.moves.length;
     if (mode === 'bot') {
       const r = E.search(game.s, 2, 2), botScore = r ? (game.s.turn === myColor ? -r.score : r.score) : 0;
-      if (botScore <= 30) { toast(BOTS[botLevel].name + ' accepts the draw.'); finish('1/2-1/2', 'agreement'); }
-      else { toast(BOTS[botLevel].name + ' declines the draw.'); renderStatus(); }
+      if (botScore <= 30) { toast(foe().name + ' accepts the draw.'); finish('1/2-1/2', 'agreement'); }
+      else { toast(foe().name + ' declines the draw.'); renderStatus(); }
       return;
     }
     if (og && og.p2p) rtcSend(og, { t: 'draw-offer', n: game.moves.length });
