@@ -9,7 +9,7 @@
   --good: #1f8a4c; --bad: #c0392b;
   --sq-light: #ece6d6; --sq-dark: #5b8790; --sq-hi: rgba(246, 196, 62, .62); --sq-check: rgba(220, 60, 50, .78);
   --pw: #fbf8ee; --pw-edge: #1d2326; --pb: #22272a; --pb-edge: #000000;
-  --c-best: #2e9d57; --c-excellent: #6aa83a; --c-good: #7f97a0; --c-inaccuracy: #d9a514; --c-mistake: #e2811c; --c-blunder: #d4432f;
+  --c-brilliant: #16a6a0; --c-great: #3f7fd0; --c-book: #a07a52; --c-miss: #d9575b; --c-best: #2e9d57; --c-excellent: #6aa83a; --c-good: #7f97a0; --c-inaccuracy: #d9a514; --c-mistake: #e2811c; --c-blunder: #d4432f;
   --display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
   --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -225,6 +225,66 @@ select.inp { flex: 0 1 auto }
 .pzinfo .pill { margin: 0 }
 .pzinfo .num { color: var(--muted); font-variant-numeric: tabular-nums }
 .themes button .lv { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px }
+.boardrow { display: flex; gap: 8px; align-items: stretch }
+.boardrow .board { flex: 1; min-width: 0 }
+.evalv { position: relative; flex: none; width: 22px; border-radius: 6px; overflow: hidden; background: #23292d; border: 1px solid var(--line) }
+.evalv div { position: absolute; left: 0; right: 0; bottom: 0; background: #f5f2e8; transition: height .35s }
+.evalv.flip div { bottom: auto; top: 0 }
+.evalv span { position: absolute; left: 0; right: 0; text-align: center; font: 700 9.5px var(--body); font-variant-numeric: tabular-nums }
+.evalv span.lo { bottom: 4px } .evalv span.hi { top: 4px } .evalv span.onw { color: #23292d } .evalv span.onb { color: #f5f2e8 }
+.rvsum { display: flex; flex-direction: column; gap: 14px }
+.accs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+.acc { border-radius: 14px; padding: 12px; text-align: center; border: 1px solid var(--line); min-width: 0 }
+.acc.w { background: #f7f4ea; color: #1d2326 } .acc.b { background: #23292d; color: #f3f1e8 }
+.acc small { display: block; opacity: .75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap } .acc b { font: 700 34px/1.1 var(--display); font-variant-numeric: tabular-nums } .acc i { display: block; font-style: normal; font-size: 12.5px; opacity: .8 }
+.graph { position: relative; height: 92px; border-radius: 12px; overflow: hidden; background: #23292d; cursor: pointer; border: 1px solid var(--line) }
+.graph svg { position: absolute; inset: 0; width: 100%; height: 100% }
+.graph .cur { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); margin-left: -1px }
+.graph .pt { position: absolute; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #fff; transform: translate(-50%, -50%) }
+.bdg { display: inline-grid; place-items: center; min-width: 24px; height: 24px; border-radius: 99px; color: #fff; font: 700 12px var(--body); padding: 0 4px; vertical-align: middle }
+.rvrows { display: grid; grid-template-columns: 1fr 2.2em 30px 2.2em; gap: 5px 8px; align-items: center; font-variant-numeric: tabular-nums }
+.rvrows b { text-align: center; font: 700 16px var(--display) } .rvrows .zero { opacity: .35 }
+.phase { display: grid; grid-template-columns: 1fr 3em 3em; gap: 3px 8px; font-size: 14px; font-variant-numeric: tabular-nums } .phase span:not(:nth-child(3n+1)) { text-align: right; font-weight: 600 } .phase span:nth-child(3n+1) { color: var(--muted) }
+.prog { height: 8px; border-radius: 9px; background: var(--line); overflow: hidden } .prog div { height: 100%; background: var(--accent); transition: width .2s }
+.bubble .pill { display: inline-flex; gap: 6px; align-items: center; padding: 3px 11px 3px 4px } .bubble .pill .bdg { min-width: 20px; height: 20px; background: rgba(255,255,255,.28) }
+.moves .mb { font: 700 11px var(--body); margin-left: 5px }
+.moves .cur .mb { color: inherit !important }
+.tagline { color: var(--muted); font-size: 13.5px }
+/* app shell */
+.btn { box-shadow: 0 2px 0 rgba(0,0,0,.14); transition: transform .06s, box-shadow .06s } .btn:active { transform: translateY(2px); box-shadow: none }
+.btn.primary { box-shadow: 0 3px 0 rgba(0,0,0,.25) } .card { border-radius: 16px }
+.nav button { display: inline-flex; align-items: center; gap: 9px }
+.nav button::before { font: 18px/1 "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols2", sans-serif; width: 1.1em; text-align: center }
+.nav [data-go=home]::before { content: "\265C\FE0E" } .nav [data-go=bot]::before { content: "\265E\FE0E" } .nav [data-go=coach]::before { content: "\265D\FE0E" } .nav [data-go=online]::before { content: "\265B\FE0E" } .nav [data-go=local]::before { content: "\265F\FE0E" } .nav [data-go=puzzle]::before { content: "\265A\FE0E" }
+@media (max-width: 999px) { .nav button { gap: 6px; padding: 8px 10px } .nav { order: 5; width: 100% } }
+@media (min-width: 1000px) {
+  .wrap { max-width: 1440px; display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 24px; align-items: start }
+  header { position: sticky; top: 14px; flex-direction: column; align-items: stretch; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px 12px 12px; min-height: calc(100vh - 40px) }
+  h1 { padding: 0 8px 8px; font-size: 24px } h1 span { display: block }
+  .nav { flex-direction: column; border: 0; padding: 0; background: none; gap: 4px; overflow: visible } .nav button { padding: 11px 12px; font-size: 16px; text-align: left }
+  header .chip { justify-content: space-between; border-radius: 12px; padding: 9px 12px; flex-wrap: wrap } .icon-btn { border-radius: 12px; padding: 9px 12px; text-align: left } .namebtn { max-width: none }
+  #gameScreen main { flex-wrap: nowrap } .side { max-width: 460px; min-width: 320px }
+  .boardcol { width: min(100%, calc(100vh - 120px)); flex: 1 1 auto; max-width: calc(100vh - 120px) } .boardcol.reviewing { width: min(100%, calc(100vh - 270px)); max-width: calc(100vh - 270px) }
+  .moves { max-height: 240px }
+}
+.strip { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px 10px; min-height: 38px }
+/* admin */
+#adminModal .card { max-width: 720px }
+.adhero { border-radius: 14px; padding: 18px; color: #fff; background: linear-gradient(120deg, #3b1d5e, #14506b 60%, #0f6f66); display: flex; align-items: center; gap: 14px }
+.adhero .cr { font: 40px/1 "Segoe UI Symbol", "Apple Symbols", sans-serif; color: #ffd45e; text-shadow: 0 0 18px rgba(255, 212, 94, .7) } .adhero b { font: 700 24px/1.1 var(--display); display: block } .adhero small { opacity: .85 }
+.adhero.help { background: linear-gradient(120deg, #44525c, #6a7a83) } .adhero.help .cr { color: #dfe6ea; text-shadow: none }
+.adtabs { display: flex; gap: 4px; flex-wrap: wrap } .adtabs button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 14px; font-weight: 600 } .adtabs button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px }
+.tile { position: relative; text-align: left; border: 1px solid var(--line); background: var(--surface-2); border-radius: 14px; padding: 12px 44px 12px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0 }
+.tile small { color: var(--muted); font-size: 12.5px; line-height: 1.3 } .tile::after { content: ""; position: absolute; right: 12px; top: 14px; width: 24px; height: 14px; border-radius: 9px; background: var(--line) } .tile::before { content: ""; position: absolute; right: 24px; top: 16px; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); z-index: 1 }
+.tile[aria-pressed=true] { border-color: #e0a92e; box-shadow: 0 0 0 1px #e0a92e inset, 0 0 18px -6px #e0a92e } .tile[aria-pressed=true]::after { background: #e0a92e } .tile[aria-pressed=true]::before { right: 14px }
+.palette { display: flex; flex-wrap: wrap; gap: 4px } .palette button { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 9px; background: var(--sq-dark); font: 26px/1 "Segoe UI Symbol", "Apple Symbols", sans-serif; padding: 0 } .palette button[aria-pressed=true] { outline: 3px solid #e0a92e }
+.palette .w { color: #fbf8ee; -webkit-text-stroke: 1px #1d2326 } .palette .b { color: #22272a }
+.crown { color: #d99a12 } .crown::before { content: "\265B\FE0E "; } .crown::after { margin-left: 6px }
+.heat { position: absolute; inset: 0; z-index: 0 }
+body.ps-gold .piece.w { color: #ffd75e; -webkit-text-stroke-color: #7a5200 } body.ps-gold .piece.b { color: #7b4a12; -webkit-text-stroke-color: #2a1700 }
+body.ps-neon .piece.w { color: #eafcff; -webkit-text-stroke-color: #00b7d6; filter: drop-shadow(0 0 1cqw #00e1ff) } body.ps-neon .piece.b { color: #2a0636; -webkit-text-stroke: .34cqw #ff3fd0; filter: drop-shadow(0 0 1cqw #ff3fd0) }
+body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -webkit-text-stroke-color: #a3152c } body.ps-ruby .piece.b { color: #8d1027; -webkit-text-stroke-color: #2e0009 }
 .note { color: var(--muted); font-size: 13.5px; margin: 0 }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; z-index: 30; max-width: calc(100% - 32px) }
 </style>
@@ -293,13 +353,16 @@ select.inp { flex: 0 1 auto }
       </div>
       <div class="rvbar" id="rvBar" hidden>
         <div class="coach"><button class="avatar" id="coachAv" aria-label="Change coach"></button><div class="bubble" id="coachSay" aria-live="polite"></div></div>
-        <div class="row">
-          <button class="btn" id="rvFirst">Start</button><button class="btn" id="rvPrev">Back</button>
-          <button class="btn primary" id="rvNext">Next</button><button class="btn" id="rvLast">End</button>
-          <button class="btn" id="rvCoach">Change coach</button><button class="btn" id="rvDone">Close review</button>
+        <div class="row" id="rvIntro"><button class="btn primary big" id="rvGo">Start review</button><button class="btn" id="rvCoach0">Change coach</button><button class="btn" id="rvDone0">Close</button></div>
+        <div class="row" id="rvCtl">
+          <button class="btn" id="rvFirst" aria-label="Start">|&lt;</button><button class="btn" id="rvPrev" aria-label="Back">&lt;</button>
+          <button class="btn primary" id="rvNext">Next</button><button class="btn" id="rvLast" aria-label="End">&gt;|</button>
+          <button class="btn" id="rvKey">Next key move</button><button class="btn" id="rvBest">Show best</button><button class="btn" id="rvRetry">Retry</button>
+          <button class="btn" id="rvCoach">Coach</button><button class="btn" id="rvSumBtn">Summary</button><button class="btn" id="rvDone">Close</button>
         </div>
       </div>
       <div class="strip" id="stripTop"><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="caps"></span><span class="clk" hidden></span></div>
+      <div class="boardrow"><div class="evalv" id="evalV" hidden><div></div><span></span></div>
       <div class="board" id="board">
         <div class="squares" id="squares"></div>
         <div class="pieces" id="pieces"></div>
@@ -310,6 +373,7 @@ select.inp { flex: 0 1 auto }
             <div class="row"><button class="btn primary" id="bannerReview">Review game</button><button class="btn" id="bannerAgain">Play again</button><button class="btn" id="bannerClose">See the board</button></div>
           </div>
         </div>
+      </div>
       </div>
       <div class="strip" id="stripBot"><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="caps"></span><span class="clk" hidden></span></div>
       <div class="evalbar" id="liveEval" hidden title="Who is ahead"><div id="liveEvalFill"></div><span id="liveEvalTxt"></span></div>
@@ -342,8 +406,10 @@ select.inp { flex: 0 1 auto }
 
       <div class="card" id="reviewCard" hidden>
         <h3>Game review</h3>
-        <div class="evalbar" title="Who is ahead"><div id="evalFill"></div><span id="evalTxt"></span></div>
-        <table class="sum" id="reviewSum"></table>
+        <div class="prog" id="rvProg"><div></div></div>
+        <div class="graph" id="rvGraph" title="Click to jump to a move"></div>
+        <p class="tagline" id="rvOpening"></p>
+        <div class="rvsum" id="rvSum"><div class="accs" id="rvAccs"></div><div class="rvrows" id="rvRows"></div><div class="phase" id="rvPhase"></div><p class="note">Reviewed by Stockfish. Accuracy and "played like" are this site's own estimates.</p></div>
       </div>
 
       <div class="card" id="coachCard" hidden>
@@ -420,36 +486,47 @@ select.inp { flex: 0 1 auto }
       <p class="note msg-bad" id="adminErr" hidden></p>
       <div class="row"><button class="btn primary" type="submit">Unlock</button><button class="btn" type="button" data-close-admin>Close</button></div>
     </form>
+    <div class="admin" id="helperBody" hidden>
+      <div class="adhero help"><span class="cr" aria-hidden="true">&#9822;&#xFE0E;</span><div><b>Helper</b><small>A few perks for trusted players.</small></div></div>
+      <div class="row"><button class="btn primary" id="hpPeek">Peek at the best move</button><span class="label" id="hpLeft"></span></div>
+      <p class="note">Three peeks a game, in computer and pass and play games only. The Silver board is on the home screen.</p>
+      <div class="tiles"><button class="tile" id="hpFast" aria-pressed="false"></button><button class="tile" id="hpParty" aria-pressed="false"></button></div>
+      <div class="row"><button class="btn" data-lock-admin>Lock on this device</button><button class="btn primary" data-close-admin>Close</button></div>
+    </div>
     <div class="admin" id="adminBody" hidden>
-      <p class="note" id="adminScope">These tools change things on this device only.</p>
-      <b>Your rating</b>
-      <div class="row"><input class="inp" id="adSetElo" type="number" min="100" max="3000" aria-label="New rating"><button class="btn" id="adSaveElo">Set rating</button><button class="btn" id="adResetMe">Reset my stats</button></div>
-      <b>Puzzles</b>
-      <div class="row"><button class="btn" id="adPzAll">Mark all solved</button><button class="btn" id="adPzReset">Reset puzzle progress</button></div>
-      <b>Powers</b>
-      <div class="row"><button class="btn" id="adArrow" aria-pressed="false"></button><button class="btn" id="adWin">Win this computer game</button></div>
-      <p class="note">Show best move asks Stockfish, one of the strongest chess engines ever made, then draws a blue arrow after about 2 seconds. It works in every game, including games against classmates.</p>
-      <p class="note"><span id="adEngine">Best move engine: not started</span>. Stockfish is free software under the GNU GPL v3. Source: <a href="https://github.com/niklasf/stockfish.js" target="_blank" rel="noopener" style="color:inherit">github.com/niklasf/stockfish.js</a></p>
-      <b>More powers</b>
-      <div class="row"><button class="btn" id="adEval"></button><button class="btn" id="adFast"></button><button class="btn" id="adUndo">Take back a move</button></div>
-      <p class="note">The evaluation bar shows who is ahead in every game, including games against classmates. Fast bots move almost instantly. Take back undoes your last move against the computer.</p>
-      <b>Positions</b>
-      <div class="row"><input class="inp" id="adFen" autocomplete="off" spellcheck="false" placeholder="Paste a FEN position" aria-label="Position in FEN"><button class="btn" id="adFenGo">Play from this position</button></div>
-      <div class="row"><button class="btn" id="adCopy">Copy this game</button></div>
-      <textarea class="inp" id="adPgn" rows="4" readonly hidden aria-label="Game moves in PGN"></textarea>
-      <p class="note">Play from this position starts a computer game from any setup, written in FEN. Copy this game gives the moves in PGN, which other chess sites can import.</p>
-      <b>Fun</b>
-      <div class="row"><button class="btn" id="adParty"></button></div>
-      <p class="note">Party mode fires confetti when you win a game or solve a puzzle. While admin is on, two extra board colours, Gold and Neon, appear on the home screen.</p>
-      <b>This device</b>
-      <div class="row"><button class="btn" id="adWipe">Reset everything on this device</button></div>
-      <p class="note">This clears your name, rating, puzzles, settings and admin unlock on this device.</p>
+      <div class="adhero"><span class="cr" aria-hidden="true">&#9819;&#xFE0E;</span><div><b>Control room</b><small id="adminScope"></small></div></div>
+      <div class="adtabs" id="adTabs"><button data-t="powers">Powers</button><button data-t="game">This game</button><button data-t="style">Style</button><button data-t="you">You</button></div>
+      <div class="admin" data-pane="powers">
+        <div class="tiles"><button class="tile" id="adArrow" aria-pressed="false"></button><button class="tile" id="adEval" aria-pressed="false"></button><button class="tile" id="adTop3" aria-pressed="false"></button><button class="tile" id="adMap" aria-pressed="false"></button><button class="tile" id="adAuto" aria-pressed="false"></button><button class="tile" id="adFast" aria-pressed="false"></button></div>
+        <p class="note">Best move and the evaluation bar work in every game. Top 3, control map and autopilot stay off in games against classmates.</p>
+        <p class="note"><span id="adEngine">Best move engine: not started</span>. Stockfish is free software under the GNU GPL v3. Source: <a href="https://github.com/niklasf/stockfish.js" target="_blank" rel="noopener" style="color:inherit">github.com/niklasf/stockfish.js</a></p>
+      </div>
+      <div class="admin" data-pane="game">
+        <div class="row"><button class="btn primary" id="adBoss">Fight Stockfish</button><button class="btn" id="adSwap">Swap sides</button><button class="btn" id="adUndo">Take back</button><button class="btn" id="adWin">Instant win</button></div>
+        <b>Board editor</b>
+        <div class="palette" id="adPalette"></div>
+        <p class="note">Pick a piece, close this window, then click squares in a computer game. Pick it again to stop. Kings cannot be moved or removed.</p>
+        <b>Positions</b>
+        <div class="row"><input class="inp" id="adFen" autocomplete="off" spellcheck="false" placeholder="Paste a FEN position" aria-label="Position in FEN"><button class="btn" id="adFenGo">Play it</button><button class="btn" id="adCopy">Copy this game</button></div>
+        <textarea class="inp" id="adPgn" rows="4" readonly hidden aria-label="Game moves in PGN"></textarea>
+      </div>
+      <div class="admin" data-pane="style">
+        <div class="tiles"><button class="tile" id="adBoom" aria-pressed="false"></button><button class="tile" id="adCrown" aria-pressed="false"></button><button class="tile" id="adParty" aria-pressed="false"></button></div>
+        <b>Pieces</b><div class="seg" id="adPieces"><button data-v="">Classic</button><button data-v="gold">Gold</button><button data-v="neon">Neon</button><button data-v="ruby">Ruby</button><button data-v="ghost">Ghost</button></div>
+        <b>Sounds</b><div class="seg" id="adPack"><button data-v="">Wood</button><button data-v="arcade">Arcade</button><button data-v="deep">Deep</button></div>
+        <b>Your own board</b><div class="row"><label class="label" for="adC1">Light</label><input type="color" id="adC1"><label class="label" for="adC2">Dark</label><input type="color" id="adC2"><button class="btn" id="adCustom">Use these colours</button></div>
+      </div>
+      <div class="admin" data-pane="you">
+        <div class="row"><input class="inp" id="adSetElo" type="number" min="100" max="3000" aria-label="New rating"><button class="btn" id="adSaveElo">Set rating</button><button class="btn" id="adResetMe">Reset my stats</button></div>
+        <div class="row"><button class="btn" id="adPzAll">Mark all puzzles solved</button><button class="btn" id="adPzReset">Reset puzzle progress</button></div>
+        <div class="row"><button class="btn" id="adWipe">Reset everything on this device</button><button class="btn" id="adLockBtn">Lock admin on this device</button></div>
       <div class="admin" id="adShared" hidden>
         <b>Class ladder (everyone sees this)</b>
         <div class="list" id="adLadder"></div>
         <div class="row"><button class="btn" id="adClearGames">Delete unfinished online games</button></div>
       </div>
-      <div class="row"><button class="btn" id="adLockBtn">Lock admin on this device</button><button class="btn primary" data-close-admin>Close</button></div>
+      </div>
+      <div class="row"><button class="btn primary" data-close-admin>Close</button></div>
     </div>
   </div>
 </div>
@@ -974,6 +1051,8 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   let drawSentAt = -1, drawIncoming = -1, leaveArmed = 0, clock = null, clockTimer = 0, coachGame = false, vs = null, vsHintState = null, premove = null;
   const pendingSave = store.get('cc-save', null);
   const TCS = ['none', '1+0', '3+0', '3+2', '5+0', '10+0', '15+10'];
+  const HELPER_HASH = '60d6d7d0cfbcee9e774d97afb0dc974afa8c4fe340904b4e62805477c88754fd';
+  let helper = store.get('cc-admin', false) === 'helper', bossGame = false, editPiece = '', peeks = 3, peek = null, t3 = null;
   let admin = store.get('cc-admin', false) === true, amOwner = false, hintCache = { key: '', m: null };
   const BOARD_THEMES = [
     { id: 'lagoon', name: 'Lagoon', light: '#ece6d6', dark: '#5b8790', base: true },
@@ -984,6 +1063,8 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     { id: 'coral', name: 'Coral', light: '#f6e2d7', dark: '#c97a63' },
     { id: 'slate', name: 'Slate', light: '#dfe3e6', dark: '#6b7a86' },
     { id: 'cherry', name: 'Cherry', light: '#f3dfe0', dark: '#b5525e' },
+    { id: 'silver', name: 'Silver', light: '#f1f3f5', dark: '#9aa5ad', helper: true },
+    { id: 'custom', name: 'My board', light: '#ffffff', dark: '#444444', admin: true },
     { id: 'gold', name: 'Gold', light: '#f7e7b4', dark: '#c79a2b', admin: true },
     { id: 'neon', name: 'Neon', light: '#c9f7ff', dark: '#ff4fa3', admin: true }
   ];
@@ -1000,7 +1081,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   const TYPE_NAMES = { m1: 'Mate in 1', m2: 'Mate in 2', m3: 'Mate in 3', m4: 'Mate in 4', win: 'Win material' };
   let pz = Object.assign({ level: 'easy', done: {}, streak: 0, best: 0, rating: 400, n: 0 }, store.get('cc-puzzles2', {}));
   let puzzle = null;
-  const view = () => (review && review.idx < game.moves.length ? game.states[review.idx] : game.s);
+  const view = () => (review && review.peek ? review.peek : review && review.idx < game.moves.length ? game.states[review.idx] : game.s);
 
   /* ---------- sound (synthesised, no files) ---------- */
   let ac = null;
@@ -1018,6 +1099,8 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     return a.ccMaster;
   }
   function knock(when, pitch, vol) {
+    if (admin && prefs.pack === 'arcade') return tone(when, pitch * 3, .09, vol * .25, 'square');
+    if (admin && prefs.pack === 'deep') pitch *= .55;
     const a = audio(); if (!a) return;
     const t = a.currentTime + when;
     const len = Math.floor(a.sampleRate * 0.06), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
@@ -1052,6 +1135,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   };
   function moveSound(rec) {
     const m = rec.move;
+    if (m.captured && admin && prefs.adBoom) boom(m.to);
     if (rec.check) sfx.check(); else if (m.promo) sfx.promote();
     else if (m.flag === 'castleK' || m.flag === 'castleQ') sfx.castle();
     else if (m.captured) sfx.capture(); else sfx.move();
@@ -1073,7 +1157,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     return toSq(row * 8 + c);
   }
   function renderSquares() {
-    const targets = selected < 0 ? [] : canPremove() ? preTargets(selected) : game.legalFrom(selected);
+    const targets = selected < 0 ? [] : review ? (review.retry ? E.legal(view()).filter(m => m.from === selected) : []) : canPremove() ? preTargets(selected) : game.legalFrom(selected);
     const vs = view(), kingInCheck = E.inCheck(vs) ? vs.b.indexOf(vs.turn === 'w' ? 'K' : 'k') : -1;
     for (let i = 0; i < 64; i++) {
       const sq = toSq(i), el = sqEls[i];
@@ -1124,8 +1208,10 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       $('liveEvalFill').style.width = winPct(ev) + '%';
       $('liveEvalTxt').textContent = hintCache.pending && !hintCache.depth ? 'Thinking\u2026' : Math.abs(ev) >= 90000 ? 'Checkmate' : Math.abs(ev) < 15 ? 'Even' : (ev > 0 ? 'White +' : 'Black +') + (Math.min(Math.abs(ev), 2000) / 100).toFixed(1);
     }
+    extras();
     if (vsHintState && vsHintState.level === 2 && vsHintState.m && vsHintState.key === E.toFen(game.s)) piecesEl.appendChild(arrowSvg(vsHintState.m.from, vsHintState.m.to, 'rgba(46,157,87,.85)'));
-    if (review && review.ready && review.idx > 0) drawReviewMarks();
+    if (review && review.ready && review.started && review.idx > 0 && !review.peek && !review.retry) drawReviewMarks();
+    paintEvalV(wantEval);
   }
 
   function captured(color) { /* pieces of `color` that are off the board */
@@ -1152,7 +1238,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     [[$('stripTop'), top], [$('stripBot'), bottom]].forEach(([el, color]) => {
       const info = sideInfo(color), other = color === 'w' ? 'b' : 'w', cap = captured(other);
       el.querySelector('.dot').className = 'dot ' + color;
-      el.querySelector('.nm').textContent = info.name;
+      el.querySelector('.nm').textContent = info.name; el.querySelector('.nm').classList.toggle('crown', admin && !!prefs.adCrown && mode !== 'local' && mode !== 'puzzle' && color === myColor);
       el.querySelector('.elo').textContent = info.elo === '' ? '' : '(' + info.elo + ')';
       const caps = el.querySelector('.caps');
       caps.textContent = cap.s;
@@ -1169,7 +1255,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       if (review) {
         if (i === review.idx - 1) s.className = 'cur';
         const ply = review.ready && review.plies[i];
-        if (ply && CLS[ply.cls].bad) s.style.color = i === review.idx - 1 ? '' : 'var(--c-' + ply.cls + ')';
+        if (ply && !['best', 'excellent', 'good', 'book'].includes(ply.cls)) { const mb = document.createElement('span'); mb.className = 'mb'; mb.textContent = CLS[ply.cls].sym; mb.style.color = 'var(--c-' + ply.cls + ')'; s.append(mb); }
         s.onclick = () => { if (review && review.ready) go(i + 1, false); };
       } else if (i === game.moves.length - 1) s.className = 'last';
       el.appendChild(s);
@@ -1228,7 +1314,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     $('myElo').textContent = profile.elo;
     $('myRec').textContent = profile.w + 'W ' + profile.l + 'L ' + profile.d + 'D';
   }
-  function render(anim) { renderSquares(); renderPieces(anim); renderStrips(); renderMoves(); renderStatus(); renderReview(); saveGame(); }
+  function render(anim) { renderSquares(); renderPieces(anim); renderStrips(); renderMoves(); renderStatus(); renderReview(); saveGame(); autopilot(); }
 
   /* ---------- playing moves ---------- */
   function canMove() {
@@ -1300,17 +1386,34 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   function botTurn() {
     thinking = true; renderStatus();
     const level = botLevel;
+    if (foe().sf) {
+      const g = game, n = g.moves.length, key = E.toFen(g.s);
+      engineAsk(key, 700, 1).then(r => {
+        if (game !== g || g.moves.length !== n || mode !== 'bot' || finished || !bossGame) return;
+        thinking = false;
+        const m = (r && g.legal().find(x => E.uci(x) === r[0].u)) || E.bestMove(g.s, foe().ai);
+        if (m) commit(m, true);
+      });
+      return;
+    }
     botTimer = setTimeout(() => {
       const m = E.bestMove(game.s, foe().ai);
       thinking = false;
       if (m && mode === 'bot' && !finished) commit(m, true);
-    }, admin && prefs.adFast ? 80 : 450 + Math.random() * 350);
+    }, (admin || helper) && prefs.adFast ? 80 : 450 + Math.random() * 350);
   }
 
   board.addEventListener('pointerdown', e => {
     if (e.button > 0 || !$('bannerOv').hidden || !$('promoOv').hidden) return;
     audio();
     const sq = sqAt(e.clientX, e.clientY);
+    if (sq >= 0 && editPiece && admin && mode === 'bot' && !review) return editSquare(sq);
+    const rt = review && review.retry;
+    if (rt) {
+      if (selected >= 0 && selected !== sq && retryMove(selected, sq)) return;
+      const q = sq >= 0 ? view().b[sq] : ''; selected = q && E.colorOf(q) === view().turn ? sq : -1; renderSquares();
+      return;
+    }
     const pre = canPremove();
     if (sq < 0 || !(canMove() || pre)) return;
     if (pre && premove && selected < 0) { premove = null; renderSquares(); }
@@ -1406,7 +1509,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   let botLevel = prefs.bot;
   function newGame() {
     drawSentAt = drawIncoming = -1;
-    startClock('none'); vs = null; vsHintState = null; premove = null;
+    startClock('none'); peeks = 3; peek = null; vs = null; vsHintState = null; premove = null;
     if (mode === 'puzzle') return loadPuzzle(pz.level);
     puzzle = null;
     clearTimeout(botTimer); thinking = false; finished = false; endInfo = null; selected = -1; lastMove = null; review = null; reviewToken++;
@@ -1430,7 +1533,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     }
     leaveArmed = 0;
     if (mode === 'online') closeOnline();
-    mode = m; coachGame = wantCoach;
+    mode = m; coachGame = wantCoach; bossGame = false;
     newGame();
   }
 
@@ -1439,7 +1542,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     const el = document.createElement('button'); el.className = 'bot';
     el.innerHTML = '<b></b><small></small>';
     el.firstChild.textContent = b.name; el.lastChild.textContent = 'Strength ' + b.elo;
-    el.onclick = () => { prefs.bot = i; store.set('cc-prefs', prefs); newGame(); };
+    el.onclick = () => { bossGame = false; prefs.bot = i; store.set('cc-prefs', prefs); newGame(); };
     $('bots').appendChild(el);
   });
   function paintColorSeg() { document.querySelectorAll('.colorseg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.c === prefs.color)); }
@@ -1778,6 +1881,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   /* ---------- play your coach ---------- */
   const COACH_LEVELS = [{ i: 1, elo: 300 }, { i: 7, elo: 900 }, { i: 10, elo: 1300 }, { i: 13, elo: 1800 }];
   function foe() {
+    if (bossGame && !coachGame) return { name: 'Stockfish', elo: 3500, ai: BOTS[BOTS.length - 1].ai, sf: true };
     if (!coachGame) return BOTS[botLevel];
     const l = COACH_LEVELS[prefs.coachLvl] || COACH_LEVELS[1];
     return { name: coach().name, elo: l.elo, ai: BOTS[l.i].ai };
@@ -1803,7 +1907,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     return '';
   }
   function vsJudge(before, m, rec) {
-    const c = coach(), token = {}, ply = game.moves.length;
+    const token = {}, ply = game.moves.length;
     vs = { token, text: 'Let me look at ' + rec.san + '…' };
     const set = (cls, text) => { if (vs && vs.token === token) { vs.cls = cls; vs.text = text; renderVs(); } };
     try {
@@ -1811,8 +1915,8 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
         const best = E.legal(before).find(x => E.uci(x) === d.best), same = d.best === rec.uci;
         const drop = same ? 0 : Math.max(0, winPct(d.bestScore) - winPct(Math.min(d.bestScore, d.played)));
         const cls = same || d.played >= 90000 ? 'best' : drop < 2 ? 'excellent' : drop < 5 ? 'good' : drop < 10 ? 'inaccuracy' : drop < 20 ? 'mistake' : 'blunder';
-        const bestSan = E.san(before, best), opts = c.say[cls];
-        let text = rec.san + '. ' + opts[ply % opts.length].replace('{b}', bestSan);
+        const bestSan = E.san(before, best);
+        let text = rec.san + '. ' + sayFor(cls, ply).replace('{b}', bestSan);
         if (!CLS[cls].bad) text += vsWhy(m, ply);
         else {
           const r = d.reply && E.legal(m.next).find(x => E.uci(x) === d.reply), got = m.captured ? PVAL[m.captured.toLowerCase()] : 0;
@@ -1857,7 +1961,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     $('vsBack').disabled = !game.moves.some((x, i) => (E.colorOf(x.move.piece) === myColor));
     say.textContent = '';
     if (!vs) { say.textContent = 'Hello, I am ' + c.name + '. Play me and I will talk you through every move. ' + (myColor === 'w' ? 'You start.' : 'I will start.'); return; }
-    if (vs.cls) { const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = CLS[vs.cls].label; pill.style.background = 'var(--c-' + vs.cls + ')'; say.append(pill, document.createElement('br')); }
+    if (vs.cls) say.append(pillFor(vs.cls), document.createElement('br'));
     say.append(vs.text);
     if (vs.own) { const o = document.createElement('span'); o.className = 'own'; o.textContent = vs.own; say.append(o); }
   }
@@ -1900,9 +2004,18 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
 
   /* ---------- game review ---------- */
   const CLS = {
-    best: { label: 'Best move', sym: '★' }, excellent: { label: 'Excellent', sym: '✓' }, good: { label: 'Good', sym: '•' },
-    inaccuracy: { label: 'Inaccuracy', sym: '?!', bad: 1 }, mistake: { label: 'Mistake', sym: '?', bad: 1 }, blunder: { label: 'Blunder', sym: '??', bad: 1 }
+    brilliant: { label: 'Brilliant', sym: '!!' }, great: { label: 'Great', sym: '!' }, best: { label: 'Best', sym: '\u2605' }, excellent: { label: 'Excellent', sym: '\u2713' },
+    good: { label: 'Good', sym: '\u2022' }, book: { label: 'Book', sym: '\u2261' }, inaccuracy: { label: 'Inaccuracy', sym: '?!', bad: 1 },
+    mistake: { label: 'Mistake', sym: '?', bad: 1 }, miss: { label: 'Miss', sym: '\u00d7', bad: 1 }, blunder: { label: 'Blunder', sym: '??', bad: 1 }
   };
+  const MORE_SAY = {
+    brilliant: ['You gave up material and it works. That is special.', 'A real sacrifice, and the right one!'],
+    great: ['The only move that keeps it going, and you found it.', 'Everything else was much worse. Great find.'],
+    book: ['A known opening move.', 'Straight from opening theory.'],
+    miss: ['A chance slipped by. {b} would have taken it.', 'Your opponent had slipped up. {b} was the way to punish it.']
+  };
+  const sayFor = (cls, k) => { const o = coach().say[cls] || MORE_SAY[cls]; return o[k % o.length]; };
+  const OPENINGS = [['Italian Game','e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 c2c3 g8f6'],['Two Knights Defence','e2e4 e7e5 g1f3 b8c6 f1c4 g8f6'],['Ruy Lopez','e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6'],['Scotch Game','e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4'],['Petrov Defence','e2e4 e7e5 g1f3 g8f6 f3e5 d7d6'],['Philidor Defence','e2e4 e7e5 g1f3 d7d6 d2d4'],['Vienna Game','e2e4 e7e5 b1c3 g8f6'],["King's Gambit",'e2e4 e7e5 f2f4 e5f4'],['Bishop\'s Opening','e2e4 e7e5 f1c4 g8f6'],['Sicilian Defence','e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3'],['Sicilian Defence','e2e4 c7c5 g1f3 b8c6 d2d4 c5d4'],['Sicilian Defence','e2e4 c7c5 g1f3 e7e6'],['French Defence','e2e4 e7e6 d2d4 d7d5 b1c3 g8f6'],['Caro-Kann Defence','e2e4 c7c6 d2d4 d7d5 b1c3 d5e4'],['Scandinavian Defence','e2e4 d7d5 e4d5 d8d5 b1c3'],['Pirc Defence','e2e4 d7d6 d2d4 g8f6 b1c3 g7g6'],['Modern Defence','e2e4 g7g6 d2d4 f8g7'],['Alekhine Defence','e2e4 g8f6 e4e5 f6d5'],["Queen's Gambit Declined",'d2d4 d7d5 c2c4 e7e6 b1c3 g8f6'],["Queen's Gambit Accepted",'d2d4 d7d5 c2c4 d5c4'],['Slav Defence','d2d4 d7d5 c2c4 c7c6 g1f3 g8f6'],['London System','d2d4 d7d5 c1f4 g8f6 e2e3'],['London System','d2d4 g8f6 c1f4'],["King's Indian Defence",'d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6'],['Nimzo-Indian Defence','d2d4 g8f6 c2c4 e7e6 b1c3 f8b4'],["Queen's Indian Defence",'d2d4 g8f6 c2c4 e7e6 g1f3 b7b6'],['Gr\u00fcnfeld Defence','d2d4 g8f6 c2c4 g7g6 b1c3 d7d5'],['Dutch Defence','d2d4 f7f5'],['English Opening','c2c4 e7e5 b1c3 g8f6'],['R\u00e9ti Opening','g1f3 d7d5 c2c4'],["Queen's Pawn Game",'d2d4 d7d5 g1f3 g8f6'],["King's Pawn Game",'e2e4 e7e5']].map(o => [o[0], o[1].split(' ')]);
   const PIECE = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }, PVAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
   const COACHES = [
     { id: 'magician', name: 'The Magician', glyph: 'n', tag: 'Inspired by Mikhail Tal. Loves a wild attack.', color: '#7b4fd6', intro: 'Ah, a battle! Let us find where the magic was.',
@@ -1939,60 +2052,118 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   const coach = () => COACHES.find(c => c.id === prefs.coach) || COACHES[0];
   const winPct = cp => 100 / (1 + Math.exp(-0.00368 * Math.max(-2000, Math.min(2000, cp))));
 
-  function startReview() {
-    if (!game.moves.length) return;
-    $('bannerOv').hidden = true; selected = -1;
-    const token = ++reviewToken, n = game.moves.length;
-    review = { idx: n, plies: [], ready: false };
-    render();
-    (function step(i) {
-      if (!review || token !== reviewToken) return;
-      if (i >= n) { finishReview(); return; }
-      const s = game.states[i], rec = game.moves[i], best = E.search(s, 3, 4);
-      const same = E.uci(best.move) === rec.uci;
-      const played = same ? best.score : Math.min(best.score, E.scoreOf(s, rec.move, 3, 4));
-      const drop = winPct(best.score) - winPct(played);
-      const cls = same ? 'best' : drop < 2 ? 'excellent' : drop < 5 ? 'good' : drop < 10 ? 'inaccuracy' : drop < 20 ? 'mistake' : 'blunder';
-      review.plies.push({ cls, color: s.turn, best: best.move, bestSan: E.san(s, best.move), mate: best.score >= 90000,
-        acc: Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * Math.max(0, drop)) - 3.1669)), evalW: (s.turn === 'w' ? 1 : -1) * played });
-      renderReview();
-      setTimeout(() => step(i + 1), 0);
-    })(0);
+  /* one shared Stockfish for reviews, the boss and admin tools; jobs run one after another */
+  let eng = null, engQ = Promise.resolve();
+  function engineOpen() {
+    if (eng) return eng;
+    return (eng = new Promise(res => {
+      if (!window.STOCKFISH_SRC) return res(null);
+      let w; try { w = new Worker(URL.createObjectURL(new Blob([window.STOCKFISH_SRC], { type: 'text/javascript' }))); } catch (e) { return res(null); }
+      const box = { w, lines: {}, done: null }, t = setTimeout(() => { w.terminate(); res(null); }, 12000);
+      w.onerror = () => { clearTimeout(t); res(null); };
+      w.onmessage = e => {
+        const l = String(e.data);
+        if (l === 'uciok') { w.postMessage('setoption name Hash value 32'); w.postMessage('isready'); }
+        else if (l === 'readyok') { clearTimeout(t); res(box); }
+        else if (l.startsWith('info ') && !/(upper|lower)bound/.test(l)) {
+          const m = /\bdepth (\d+).*\bscore (cp|mate) (-?\d+).*\bpv (\S+)/.exec(l), k = /multipv (\d+)/.exec(l);
+          if (m) box.lines[k ? +k[1] : 1] = { u: m[4], score: m[2] === 'cp' ? +m[3] : (+m[3] > 0 ? 100000 - m[3] : -100000 - m[3]), depth: +m[1] };
+        } else if (l.startsWith('bestmove') && box.done) { const f = box.done; box.done = null; f(Object.keys(box.lines).sort().map(k => box.lines[k])); }
+      };
+      w.postMessage('uci');
+    }));
   }
-  function finishReview() {
-    const r = review; r.ready = true; r.stats = {};
-    for (const c of 'wb') {
-      const mine = r.plies.filter(p => p.color === c), counts = {};
-      Object.keys(CLS).forEach(k => { counts[k] = mine.filter(p => p.cls === k).length; });
-      r.stats[c] = { acc: mine.length ? Math.round(mine.reduce((a, p) => a + p.acc, 0) / mine.length) : 0, counts };
+  function engineAsk(fen, ms, multi) {
+    const run = async () => {
+      const box = await engineOpen();
+      if (box && !box.dead) {
+        const r = await new Promise(res => {
+          const t = setTimeout(() => { box.dead = true; box.w.terminate(); eng = Promise.resolve(null); res(null); }, ms + 8000);
+          box.lines = {}; box.done = x => { clearTimeout(t); res(x); };
+          box.w.postMessage('setoption name MultiPV value ' + multi); box.w.postMessage('position fen ' + fen); box.w.postMessage('go movetime ' + ms);
+        });
+        if (r && r.length) return r;
+      }
+      await new Promise(r => setTimeout(r, 0));
+      const a = E.think(E.fromFen(fen), Math.min(ms, 300));
+      return a ? [{ u: E.uci(a.move), score: a.score, depth: a.depth }] : null;
+    };
+    return (engQ = engQ.then(run, run));
+  }
+  function sacrifice(st, m) {
+    const v = PVAL[m.piece.toLowerCase()]; if (v < 3) return false;
+    const takes = E.legal(m.next).filter(r => r.to === m.to);
+    if (!takes.length) return false;
+    takes.sort((a, b) => PVAL[a.piece.toLowerCase()] - PVAL[b.piece.toLowerCase()]);
+    const back = E.legal(takes[0].next).some(x => x.to === m.to), loss = back ? v - PVAL[takes[0].piece.toLowerCase()] : v;
+    return loss - (m.captured ? PVAL[m.captured.toLowerCase()] : 0) >= 2;
+  }
+  async function startReview() {
+    if (!game.moves.length) return;
+    $('bannerOv').hidden = true; selected = -1; premove = null;
+    const token = ++reviewToken, g = game, n = g.moves.length;
+    const me = review = { idx: n, plies: [], ready: false, started: false, done: 0, peek: null, retry: null };
+    render();
+    const ms = Math.round(Math.max(120, Math.min(300, 16000 / n))), A = [];
+    for (let i = 0; i <= n; i++) {
+      const st = i < n ? g.states[i] : g.s, legal = E.legal(st);
+      let r = null;
+      if (legal.length) { r = await engineAsk(E.toFen(st), ms, 2); if (review !== me || token !== reviewToken) return; }
+      A.push(r || [{ u: null, score: legal.length ? 0 : E.inCheck(st) ? -100000 : 0 }]);
+      me.done = i + 1; renderReview();
     }
-    go(0, false);
+    const ucis = g.moves.map(m => m.uci), std = E.toFen(g.states[0]) === E.START;
+    let bookTo = 0; me.opening = '';
+    if (std) OPENINGS.forEach(([nm, line]) => { let k = 0; while (k < line.length && k < n && line[k] === ucis[k]) k++; if (k > bookTo || (k === bookTo && k === line.length)) { bookTo = k; me.opening = nm; } });
+    if (bookTo < 2) me.opening = '';
+    for (let i = 0; i < n; i++) {
+      const st = g.states[i], rec = g.moves[i], a = A[i], legal = E.legal(st), bestM = legal.find(x => E.uci(x) === a[0].u) || rec.move;
+      const same = a[0].u === rec.uci, mated = !E.legal(rec.move.next || E.make(st, rec.move)).length && rec.check;
+      const played = mated ? 100000 : same ? a[0].score : Math.min(a[0].score, -A[i + 1][0].score);
+      const wb = winPct(a[0].score), wp = winPct(played), drop = mated ? 0 : Math.max(0, wb - wp), w2 = a[1] ? winPct(a[1].score) : wb;
+      const prev = me.plies[i - 1], retake = i > 0 && g.moves[i - 1].move.captured && g.moves[i - 1].move.to === rec.move.to;
+      let cls = same || mated ? 'best' : drop < 2 ? 'excellent' : drop < 5 ? 'good' : drop < 10 ? 'inaccuracy' : drop < 20 ? 'mistake' : 'blunder';
+      if (i < bookTo && drop < 8) cls = 'book';
+      else if ((same || drop < 1.5) && legal.length > 1 && wp >= 45 && w2 < 92 && sacrifice(st, rec.move)) cls = 'brilliant';
+      else if (same && legal.length > 1 && a[1] && wb - w2 >= 15 && !retake && wb > 35) cls = 'great';
+      else if (drop >= 10 && prev && (prev.cls === 'mistake' || prev.cls === 'blunder') && wp >= 42) cls = 'miss';
+      me.plies.push({ cls, color: st.turn, best: bestM, bestSan: E.san(st, bestM), mate: a[0].score >= 90000, drop,
+        acc: Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * drop) - 3.1669)), evalW: (st.turn === 'w' ? 1 : -1) * played });
+    }
+    me.ready = true; me.stats = {};
+    const avg = l => l.length ? Math.round(l.reduce((x, q) => x + q.acc, 0) / l.length) : null;
+    const pieces = st => st.b.filter(q => q && !'kKpP'.includes(q)).length;
+    const endAt = g.states.findIndex(st => pieces(st) <= 6), eg = endAt < 0 ? n : endAt, op = Math.min(16, eg);
+    for (const c of 'wb') {
+      const f = (x, i) => x.color === c, mine = me.plies.filter(f), counts = {};
+      Object.keys(CLS).forEach(k => { counts[k] = mine.filter(q => q.cls === k).length; });
+      me.stats[c] = { acc: avg(mine) || 0, counts, phases: [avg(me.plies.slice(0, op).filter(f)), avg(me.plies.slice(op, eg).filter(f)), avg(me.plies.slice(eg).filter(f))], like: mine.length >= 8 ? Math.round(Math.max(200, Math.min(2800, 150 * Math.exp((avg(mine) || 0) * .0265))) / 50) * 50 : null };
+    }
+    render();
   }
   function go(k, anim) {
     if (!review || !review.ready) return;
+    review.started = true; review.peek = null; review.retry = null; selected = -1;
     k = Math.max(0, Math.min(game.moves.length, k));
-    review.idx = k;
-    lastMove = k > 0 ? game.moves[k - 1].move : null;
+    review.idx = k; lastMove = k > 0 ? game.moves[k - 1].move : null;
     if (anim && k > 0) moveSound(game.moves[k - 1]);
     render(anim && k > 0 ? lastMove : null);
   }
   function closeReview() {
-    review = null; reviewToken++;
+    review = null; reviewToken++; selected = -1;
     const l = game.moves[game.moves.length - 1]; lastMove = l ? l.move : null;
     render();
   }
   function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
   function coachLine() {
     const c = coach(), r = review, k = r.idx;
-    if (k === 0) {
+    if (!r.started || k === 0) {
       const line = col => { const st = r.stats[col]; return st.acc + '% accuracy, with ' + plural(st.counts.blunder, 'blunder') + ' and ' + plural(st.counts.mistake, 'mistake'); };
-      let facts;
-      if (mode === 'local') facts = 'White played at ' + line('w') + '. Black played at ' + line('b') + '.';
-      else facts = 'You played at ' + line(myColor) + '. ' + sideInfo(myColor === 'w' ? 'b' : 'w').name + ' played at ' + r.stats[myColor === 'w' ? 'b' : 'w'].acc + '%.';
-      return { text: c.intro + ' ' + facts + ' Press Next to step through the moves.' };
+      const facts = mode === 'local' ? 'White played at ' + line('w') + '. Black played at ' + line('b') + '.' : 'You played at ' + line(myColor) + '.';
+      return { text: c.intro + ' ' + facts };
     }
-    const ply = r.plies[k - 1], rec = game.moves[k - 1], opts = c.say[ply.cls];
-    let text = sideInfo(ply.color).name + ' played ' + rec.san + '. ' + opts[k % opts.length].replace('{b}', ply.bestSan);
+    const ply = r.plies[k - 1], rec = game.moves[k - 1];
+    let text = rec.san + '. ' + sayFor(ply.cls, k).replace('{b}', ply.bestSan);
     if (CLS[ply.cls].bad) {
       const reply = r.plies[k], got = rec.move.captured ? PVAL[rec.move.captured.toLowerCase()] : 0;
       if (ply.mate) text += ' ' + ply.bestSan + ' forced checkmate.';
@@ -2002,52 +2173,98 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     }
     return { text, cls: ply.cls };
   }
+  const evalText = ev => Math.abs(ev) >= 90000 ? (Math.abs(ev) === 100000 ? '#' : 'M' + (100000 - Math.abs(ev))) : (Math.abs(ev) / 100).toFixed(1);
+  function badge(cls) { const b = document.createElement('span'); b.className = 'bdg'; b.textContent = CLS[cls].sym; b.style.background = 'var(--c-' + cls + ')'; return b; }
+  function pillFor(cls) { const p = document.createElement('span'); p.className = 'pill'; p.style.background = 'var(--c-' + cls + ')'; const b = document.createElement('span'); b.className = 'bdg'; b.textContent = CLS[cls].sym; p.append(b, CLS[cls].label); return p; }
+  function paintEvalV(live) {
+    const el = $('evalV'), rv = review && review.ready;
+    el.hidden = !(rv || live);
+    $('liveEval').hidden = true;
+    if (el.hidden) return;
+    const ev = rv ? (review.idx > 0 ? review.plies[review.idx - 1].evalW : 0) : hintCache.score || 0, sp = el.querySelector('span'), w = ev >= 0;
+    el.classList.toggle('flip', flipped);
+    el.querySelector('div').style.height = Math.max(3, Math.min(97, winPct(ev))) + '%';
+    sp.textContent = !rv && hintCache.pending && !hintCache.depth ? '…' : evalText(ev);
+    sp.className = (w !== flipped ? 'lo ' : 'hi ') + (w ? 'onw' : 'onb');
+  }
+  function renderGraph() {
+    const r = review, box = $('rvGraph'), n = r.plies.length; box.textContent = '';
+    const pt = i => [i / n * 100, 100 - (i ? winPct(r.plies[i - 1].evalW) : 50)];
+    let d = 'M0,100 '; for (let i = 0; i <= n; i++) d += 'L' + pt(i).map(v => v.toFixed(2)).join(',') + ' ';
+    const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none');
+    const a = document.createElementNS(NS, 'path'); a.setAttribute('d', d + 'L100,100 Z'); a.setAttribute('fill', '#f5f2e8');
+    const l = document.createElementNS(NS, 'line'); [['x1', 0], ['x2', 100], ['y1', 50], ['y2', 50], ['stroke', '#8b979c'], ['stroke-width', .6]].forEach(([k, v]) => l.setAttribute(k, v));
+    svg.append(a, l); box.append(svg);
+    const add = (cls, x, y) => { const e = document.createElement('div'); e.className = cls; e.style.left = x + '%'; if (y != null) e.style.top = y + '%'; box.append(e); return e; };
+    add('cur', r.idx / n * 100);
+    r.plies.forEach((q, i) => { if (['brilliant', 'great', 'mistake', 'miss', 'blunder'].includes(q.cls)) { const [x, y] = pt(i + 1); add('pt', x, Math.max(8, Math.min(92, y))).style.background = 'var(--c-' + q.cls + ')'; } });
+  }
   function renderReview() {
     if (!review) return;
     const c = coach(), r = review, say = $('coachSay'), n = game.moves.length;
     $('coachAv').textContent = glyph(c.glyph); $('coachAv').style.background = c.color;
     document.querySelectorAll('#coaches .coachpick').forEach(b => b.setAttribute('aria-pressed', b.dataset.id === c.id));
-    ['rvFirst', 'rvPrev', 'rvNext', 'rvLast'].forEach(id => { $(id).disabled = !r.ready; });
+    $('rvIntro').hidden = r.started; $('rvCtl').hidden = !r.started; $('rvGo').disabled = !r.ready;
+    $('rvProg').hidden = r.ready; $('rvGraph').hidden = !r.ready; $('rvSum').hidden = !r.ready || r.started; $('rvOpening').textContent = r.opening || '';
     say.textContent = '';
     if (!r.ready) {
-      say.textContent = c.name + ' is reviewing move ' + Math.min(n, r.plies.length + 1) + ' of ' + n + '…';
-      $('evalFill').style.width = '50%'; $('evalTxt').textContent = ''; $('reviewSum').textContent = '';
+      say.textContent = c.name + ' is studying the game with Stockfish… ' + Math.round(r.done / (n + 1) * 100) + '%';
+      $('rvProg').firstElementChild.style.width = r.done / (n + 1) * 100 + '%';
       return;
     }
-    $('rvPrev').disabled = $('rvFirst').disabled = r.idx === 0;
-    $('rvNext').disabled = $('rvLast').disabled = r.idx === n;
-    const line = coachLine();
-    if (line.cls) { const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = CLS[line.cls].label; pill.style.background = 'var(--c-' + line.cls + ')'; say.append(pill, document.createElement('br')); }
-    say.append(line.text);
-    const ev = r.idx > 0 ? r.plies[r.idx - 1].evalW : 0;
-    $('evalFill').style.width = winPct(ev) + '%';
-    $('evalTxt').textContent = Math.abs(ev) >= 90000 ? 'Checkmate' : Math.abs(ev) < 15 ? 'Even' : (ev > 0 ? 'White +' : 'Black +') + (Math.min(Math.abs(ev), 2000) / 100).toFixed(1);
-    const tb = $('reviewSum'); tb.textContent = '';
-    const tr = (cells, cls, head) => { const row = document.createElement('tr'); if (cls) row.className = cls; cells.forEach(t => { const td = document.createElement(head ? 'th' : 'td'); td.append(t); row.appendChild(td); }); tb.appendChild(row); };
-    tr(['', sideInfo('w').name, sideInfo('b').name], '', true);
-    tr(['Accuracy', r.stats.w.acc + '%', r.stats.b.acc + '%'], 'acc');
-    Object.keys(CLS).forEach(k => {
-      const lab = document.createElement('span'), sw = document.createElement('i'); sw.className = 'sw'; sw.style.background = 'var(--c-' + k + ')';
-      lab.append(sw, CLS[k].label);
-      tr([lab, '' + r.stats.w.counts[k], '' + r.stats.b.counts[k]]);
-    });
+    $('rvPrev').disabled = $('rvFirst').disabled = r.idx === 0; $('rvNext').disabled = $('rvLast').disabled = r.idx === n;
+    const ply = r.idx > 0 ? r.plies[r.idx - 1] : null, bad = ply && CLS[ply.cls].bad;
+    $('rvBest').hidden = !ply || ply.cls === 'best' || ply.cls === 'book'; $('rvBest').textContent = r.peek && !r.retry ? 'Back to the move' : 'Show best'; $('rvRetry').hidden = !bad;
+    if (r.msg) say.textContent = r.msg;
+    else { const line = coachLine(); if (line.cls) say.append(pillFor(line.cls), document.createElement('br')); say.append(line.text); }
+    r.msg = '';
+    renderGraph();
+    if (r.started) return;
+    const ac = $('rvAccs'); ac.textContent = '';
+    for (const col of 'wb') { const d = document.createElement('div'), sm = document.createElement('small'), b = document.createElement('b'), i = document.createElement('i'); d.className = 'acc ' + col; sm.textContent = sideInfo(col).name; b.textContent = r.stats[col].acc + '%'; i.textContent = r.stats[col].like ? 'Played like about ' + r.stats[col].like : 'Accuracy'; d.append(sm, b, i); ac.append(d); }
+    const rows = $('rvRows'); rows.textContent = '';
+    Object.keys(CLS).forEach(k => { const t = document.createElement('span'); t.textContent = CLS[k].label; const cell = v => { const b = document.createElement('b'); b.textContent = v; b.style.color = v ? 'var(--c-' + k + ')' : ''; b.className = v ? '' : 'zero'; return b; }; rows.append(t, cell(r.stats.w.counts[k]), badge(k), cell(r.stats.b.counts[k])); });
+    const ph = $('rvPhase'); ph.textContent = '';
+    ['Opening', 'Middlegame', 'Endgame'].forEach((nm, i) => [nm, r.stats.w.phases[i], r.stats.b.phases[i]].forEach((v, j) => { const sp = document.createElement('span'); sp.textContent = j ? (v == null ? '–' : v + '%') : v; ph.append(sp); }));
   }
+  function retryMove(from, to) {
+    const r = review, st = view(), opts = E.legal(st).filter(m => m.from === from && m.to === to), ply = r.plies[r.idx];
+    if (!opts.length) return false;
+    const m = opts.find(x => x.promo === 'q') || opts[0];
+    selected = -1;
+    const win = t => { r.idx = r.retry.k; r.retry = null; r.peek = m.next; lastMove = m; sfx.promote(); r.msg = t; render(m); };
+    if (E.uci(m) === E.uci(ply.best)) { win('Yes! ' + ply.bestSan + ' is the best move.'); return true; }
+    r.peek = m.next; lastMove = m; r.msg = 'Let me check that…'; render(m);
+    const token = r.retry;
+    Promise.all([engineAsk(E.toFen(st), 250, 1), E.legal(m.next).length ? engineAsk(E.toFen(m.next), 250, 1) : null]).then(([a, b]) => {
+      if (review !== r || r.retry !== token) return;
+      const me = b ? -b[0].score : E.inCheck(m.next) ? 100000 : 0;
+      if (winPct(a[0].score) - winPct(me) < 4) return win('Nice. ' + E.san(st, m) + ' works well too.');
+      sfx.wrong(); r.peek = null; lastMove = r.idx > 0 ? game.moves[r.idx - 1].move : null; r.msg = E.san(st, m) + ' is not it. Try another move.'; render();
+      [m.from, m.to].forEach(q => sqEls[toSq(q)].classList.add('bad'));
+    });
+    return true;
+  }
+  $('rvGo').onclick = () => go(0, false);
+  $('rvSumBtn').onclick = () => { review.started = false; review.peek = review.retry = null; render(); };
+  $('rvCoach0').onclick = () => $('rvCoach').onclick();
+  $('rvDone0').onclick = closeReview;
+  $('rvKey').onclick = () => {
+    const key = i => !['book', 'best', 'excellent', 'good'].includes(review.plies[i].cls);
+    for (let i = review.idx; i < review.plies.length; i++) if (key(i)) return go(i + 1, true);
+    toast('No more key moves.');
+  };
+  $('rvBest').onclick = () => {
+    const r = review, k = r.idx; if (!k) return;
+    if (r.peek && !r.retry) return go(k, false);
+    const m = r.plies[k - 1].best; r.retry = null; r.peek = m.next || E.make(game.states[k - 1], m); lastMove = m;
+    r.msg = r.plies[k - 1].bestSan + ' was the best move here.'; moveSound({ move: m }); render(m);
+  };
+  $('rvRetry').onclick = () => { const r = review, k = r.idx; if (!k) return; r.retry = { k }; r.idx = k - 1; r.peek = null; lastMove = k > 1 ? game.moves[k - 2].move : null; r.msg = 'Your turn again. Find a better move than ' + game.moves[k - 1].san + '.'; render(); };
+  $('rvGraph').onclick = e => { const b = $('rvGraph').getBoundingClientRect(); go(Math.round((e.clientX - b.left) / b.width * game.moves.length), false); };
   function drawReviewMarks() {
     const ply = review.plies[review.idx - 1], m = game.moves[review.idx - 1].move;
-    if (CLS[ply.cls].bad) {
-      const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
-      svg.setAttribute('viewBox', '0 0 8 8'); svg.setAttribute('class', 'arrow');
-      const c = sq => { const i = toSq(sq); return [(i & 7) + 0.5, (i >> 3) + 0.5]; };
-      const [x1, y1] = c(ply.best.from), [x2, y2] = c(ply.best.to), len = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / len, uy = (y2 - y1) / len;
-      const bx = x2 - ux * 0.42, by = y2 - uy * 0.42;
-      const line = document.createElementNS(NS, 'line');
-      line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', bx); line.setAttribute('y2', by);
-      line.setAttribute('stroke', 'rgba(46,157,87,.85)'); line.setAttribute('stroke-width', '0.17'); line.setAttribute('stroke-linecap', 'round');
-      const head = document.createElementNS(NS, 'polygon');
-      head.setAttribute('points', [[x2 - ux * 0.08, y2 - uy * 0.08], [bx - uy * 0.24, by + ux * 0.24], [bx + uy * 0.24, by - ux * 0.24]].map(p => p.join(',')).join(' '));
-      head.setAttribute('fill', 'rgba(46,157,87,.9)');
-      svg.append(line, head); piecesEl.appendChild(svg);
-    }
+    if (CLS[ply.cls].bad) piecesEl.appendChild(arrowSvg(ply.best.from, ply.best.to, 'rgba(46,157,87,.85)'));
     const wrap = document.createElement('div'); wrap.className = 'badge'; wrap.style.transform = pos(m.to);
     const b = document.createElement('b'); b.textContent = CLS[ply.cls].sym; b.style.background = 'var(--c-' + ply.cls + ')';
     wrap.appendChild(b); piecesEl.appendChild(wrap);
@@ -2663,8 +2880,11 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     svg.append(line, head);
     return svg;
   }
-  function curTheme() { const t = BOARD_THEMES.find(x => x.id === prefs.boardTheme); return t && (!t.admin || admin) ? t : BOARD_THEMES[0]; }
+  function themeOk(t) { return (!t.admin || admin) && (!t.helper || admin || helper); }
+  function curTheme() { const t = BOARD_THEMES.find(x => x.id === prefs.boardTheme); return t && themeOk(t) ? t : BOARD_THEMES[0]; }
   function applyTheme() {
+    const cu = BOARD_THEMES.find(x => x.id === 'custom'); if (Array.isArray(prefs.custom)) { cu.light = prefs.custom[0]; cu.dark = prefs.custom[1]; }
+    document.body.className = admin && prefs.pieceStyle ? 'ps-' + prefs.pieceStyle : '';
     const t = curTheme(), st = document.documentElement.style;
     if (!t.base) { st.setProperty('--sq-light', t.light); st.setProperty('--sq-dark', t.dark); }
     else { st.removeProperty('--sq-light'); st.removeProperty('--sq-dark'); }
@@ -2673,7 +2893,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     const cur = curTheme();
     ['homeThemes', 'setThemes'].forEach(id => {
       const box = $(id); box.textContent = '';
-      BOARD_THEMES.filter(t => !t.admin || admin).forEach(t => {
+      BOARD_THEMES.filter(themeOk).forEach(t => {
         const b = document.createElement('button'); b.className = 'swatch'; b.title = t.name; b.setAttribute('aria-label', t.name + ' board');
         b.setAttribute('aria-pressed', t.id === cur.id);
         for (let i = 0; i < 4; i++) { const q = document.createElement('i'); q.style.background = (i === 0 || i === 3) ? t.light : t.dark; b.appendChild(q); }
@@ -2690,14 +2910,14 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   }
   function paintAdmin() {
     applyTheme();
-    $('adminBtn').hidden = !admin;
+    $('adminBtn').hidden = !(admin || helper); $('adminBtn').textContent = admin ? 'Control room' : 'Helper';
     if ($('adminModal').hidden) return;
-    $('adminLock').hidden = admin; $('adminBody').hidden = !admin;
+    $('adminLock').hidden = admin || helper; $('adminBody').hidden = !admin; $('helperBody').hidden = admin || !helper;
+    if (helper && !admin) { paintTile('hpFast', 'adFast', 'Fast bots', 'Bots reply instantly'); paintTile('hpParty', 'adParty', 'Party mode', 'Confetti when you win'); $('hpLeft').textContent = plural(peeks, 'peek') + ' left this game'; }
     if (!admin) return;
     $('adSetElo').value = profile.elo;
-    $('adArrow').textContent = 'Show best move: ' + (prefs.adArrow ? 'on' : 'off');
-    $('adArrow').setAttribute('aria-pressed', !!prefs.adArrow);
-    TOGGLES.forEach(([id, label]) => { $(id).textContent = label + ': ' + (prefs[id] ? 'on' : 'off'); $(id).setAttribute('aria-pressed', !!prefs[id]); });
+    TOGGLES.forEach(([id, label, desc]) => paintTile(id, id, label, desc));
+    paintTabs();
     $('adLockBtn').hidden = amOwner;
     const shared = amOwner && !!db;
     $('adShared').hidden = !shared;
@@ -2714,7 +2934,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       });
     }
   }
-  function openAdmin() { $('adminModal').hidden = false; $('adminErr').hidden = true; paintAdmin(); if (!admin) setTimeout(() => $('adminCode').focus(), 30); }
+  function openAdmin() { $('adminModal').hidden = false; $('adminErr').hidden = true; paintAdmin(); if (!admin && !helper) setTimeout(() => $('adminCode').focus(), 30); }
   async function sha256(t) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
     return Array.from(new Uint8Array(buf)).map(x => x.toString(16).padStart(2, '0')).join('');
@@ -2725,8 +2945,8 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     let h = '';
     try { h = await sha256($('adminCode').value.trim().toLowerCase()); }
     catch (x) { return err('This browser cannot check the code here. Open the site from its web link instead.'); }
-    if (h !== ADMIN_HASH) return err('That code is not right.');
-    admin = true; store.set('cc-admin', true); $('adminCode').value = '';
+    if (h !== ADMIN_HASH && h !== HELPER_HASH) return err('That code is not right.');
+    if (h === ADMIN_HASH) { admin = true; store.set('cc-admin', true); } else { helper = true; store.set('cc-admin', 'helper'); } $('adminCode').value = '';
     toast('Admin unlocked on this device.'); paintAdmin(); render();
   });
   document.querySelectorAll('[data-close-admin]').forEach(b => b.onclick = () => { $('adminModal').hidden = true; });
@@ -2749,7 +2969,6 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     if (mode === 'puzzle') loadPuzzle(pz.level); else render();
     toast('Puzzle progress reset.');
   });
-  $('adArrow').onclick = () => { prefs.adArrow = !prefs.adArrow; store.set('cc-prefs', prefs); hintCache = { key: '', m: null }; paintAdmin(); render(); };
   $('adWin').onclick = () => {
     if (mode !== 'bot' || !inProgress()) return toast('Start a game against the computer first.');
     $('adminModal').hidden = true; show('game');
@@ -2760,9 +2979,89 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     if (!doomed.length) return toast('There are no unfinished online games.');
     Promise.all(doomed.map(g => db.doc('games/' + g.id).delete())).then(() => toast('Deleted ' + doomed.length + ' unfinished games.')).catch(() => toast('Some games could not be deleted.'));
   });
-  $('adLockBtn').onclick = () => { admin = false; prefs.adArrow = prefs.adEval = prefs.adFast = prefs.adParty = false; store.set('cc-prefs', prefs); applyTheme(); store.set('cc-admin', false); $('adminModal').hidden = true; paintAdmin(); render(); toast('Admin locked on this device.'); };
-  const TOGGLES = [['adEval', 'Evaluation bar'], ['adFast', 'Fast bots'], ['adParty', 'Party mode']];
-  TOGGLES.forEach(([id]) => { $(id).onclick = () => { prefs[id] = !prefs[id]; store.set('cc-prefs', prefs); hintCache = { key: '', m: null }; paintAdmin(); render(); }; });
+  $('adLockBtn').onclick = () => { admin = helper = false; editPiece = ''; TOGGLES.forEach(t => { prefs[t[0]] = false; }); store.set('cc-prefs', prefs); store.set('cc-admin', false); $('adminModal').hidden = true; applyTheme(); paintAdmin(); render(); toast('Locked on this device.'); };
+  document.querySelectorAll('[data-lock-admin]').forEach(b => { b.onclick = $('adLockBtn').onclick; });
+  const TOGGLES = [['adArrow', 'Best move', 'Stockfish shows a blue arrow'], ['adEval', 'Evaluation bar', 'See who is winning'], ['adTop3', 'Top 3 moves', 'Three arrows, best is boldest'], ['adMap', 'Control map', 'Green is yours, red is theirs'],
+    ['adAuto', 'Autopilot', 'Stockfish plays your moves'], ['adFast', 'Fast bots', 'Bots reply instantly'], ['adBoom', 'Explosions', 'Captures blow up'], ['adCrown', 'Crown', 'A gold crown by your name'], ['adParty', 'Party mode', 'Confetti when you win']];
+  function paintTile(id, k, label, desc) { const b = $(id), t = document.createElement('b'), d = document.createElement('small'); t.textContent = label; d.textContent = desc; b.textContent = ''; b.append(t, d); b.setAttribute('aria-pressed', !!prefs[k]); }
+  function flipPref(k) { prefs[k] = !prefs[k]; store.set('cc-prefs', prefs); hintCache = { key: '', m: null }; paintAdmin(); render(); }
+  TOGGLES.forEach(([id]) => { $(id).onclick = () => flipPref(id); });
+  $('hpFast').onclick = () => flipPref('adFast'); $('hpParty').onclick = () => flipPref('adParty');
+  let adTab = 'powers';
+  document.querySelectorAll('#adTabs button').forEach(b => { b.onclick = () => { adTab = b.dataset.t; paintAdmin(); }; });
+  function paintTabs() {
+    document.querySelectorAll('#adTabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === adTab));
+    document.querySelectorAll('[data-pane]').forEach(q => { q.hidden = q.dataset.pane !== adTab; });
+    [['adPieces', 'pieceStyle'], ['adPack', 'pack']].forEach(([id, k]) => $(id).querySelectorAll('button').forEach(b => { b.setAttribute('aria-pressed', b.dataset.v === (prefs[k] || '')); b.onclick = () => { prefs[k] = b.dataset.v; store.set('cc-prefs', prefs); paintAdmin(); if (k === 'pack') sfx.capture(); }; }));
+    const cu = Array.isArray(prefs.custom) ? prefs.custom : ['#f2e9ff', '#7e57c2']; $('adC1').value = cu[0]; $('adC2').value = cu[1];
+    const pal = $('adPalette');
+    if (!pal.children.length) ['Q', 'R', 'B', 'N', 'P', 'q', 'r', 'b', 'n', 'p', 'x'].forEach(q => { const b = document.createElement('button'); b.dataset.p = q; b.textContent = q === 'x' ? '✕' : glyph(q); b.className = q === 'x' ? '' : E.colorOf(q); b.setAttribute('aria-label', q === 'x' ? 'Eraser' : (E.colorOf(q) === 'w' ? 'White ' : 'Black ') + PIECE[q.toLowerCase()]); b.onclick = () => { editPiece = editPiece === q ? '' : q; paintAdmin(); }; pal.append(b); });
+    pal.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === editPiece));
+  }
+  $('adCustom').onclick = () => { prefs.custom = [$('adC1').value, $('adC2').value]; prefs.boardTheme = 'custom'; store.set('cc-prefs', prefs); paintAdmin(); paintThemes(); };
+  function editSquare(sq) {
+    const b = game.s.b.slice(), q = editPiece === 'x' ? '' : editPiece, row = sq >> 3;
+    if (b[sq].toLowerCase() === 'k') return toast('Kings cannot be changed.');
+    if (q.toLowerCase() === 'p' && (row === 0 || row === 7)) return toast('Pawns cannot go on the first or last row.');
+    if (thinking) return toast('Wait for your turn.');
+    b[sq] = q;
+    const st = Object.assign({}, game.s, { b, castle: 0, ep: -1, half: 0 });
+    if (E.inCheck(Object.assign({}, st, { turn: st.turn === 'w' ? 'b' : 'w' })) || !E.legal(st).length) return toast('That would break the position.');
+    game = new E.Game(E.toFen(st)); lastMove = null; selected = -1; sfx.move(); render();
+  }
+  $('adSwap').onclick = () => { if (mode !== 'bot' || finished) return toast('Swap sides works in a computer game.'); clearTimeout(botTimer); thinking = false; premove = null; myColor = myColor === 'w' ? 'b' : 'w'; flipped = myColor === 'b'; $('adminModal').hidden = true; show('game'); if (game.s.turn !== myColor) botTurn(); };
+  $('adBoss').onclick = () => { $('adminModal').hidden = true; setMode('bot'); if (mode !== 'bot') return; coachGame = false; bossGame = true; newGame(); show('game'); sfx.start(); toast('Good luck. You will need it.'); };
+  function boom(sq) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const r = board.getBoundingClientRect(), i = toSq(sq), u = r.width / 8, x = ((i & 7) + .5) * u, y = ((i >> 3) + .5) * u;
+    for (let k = 0; k < 20; k++) {
+      const e = document.createElement('div'), a = Math.random() * 6.28, d = u * (.5 + Math.random());
+      e.style.cssText = 'position:absolute;z-index:6;pointer-events:none;width:9px;height:9px;border-radius:50%;left:' + x + 'px;top:' + y + 'px;background:' + ['#ffd45e', '#ff8a3c', '#ff4d4d', '#fff3c4'][k % 4];
+      board.append(e);
+      e.animate([{ transform: 'scale(1.4)', opacity: 1 }, { transform: 'translate(' + Math.cos(a) * d + 'px,' + Math.sin(a) * d + 'px) scale(.2)', opacity: 0 }], { duration: 520 + Math.random() * 250, easing: 'cubic-bezier(.1,.7,.3,1)' }).onfinish = () => e.remove();
+    }
+  }
+  function control(b, color) {
+    const out = new Array(64).fill(0), add = (r, c) => { if (r >= 0 && r < 8 && c >= 0 && c < 8) { out[r * 8 + c]++; return !b[r * 8 + c]; } return false; };
+    const D = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+    b.forEach((q, sq) => {
+      if (!q || E.colorOf(q) !== color) return;
+      const r = sq >> 3, c = sq & 7, t = q.toLowerCase();
+      if (t === 'p') { const d = color === 'w' ? -1 : 1; add(r + d, c - 1); add(r + d, c + 1); }
+      else if (t === 'n') [[1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1]].forEach(([x, y]) => add(r + x, c + y));
+      else D.forEach(([x, y], k) => { if ((t === 'r' && k > 3) || (t === 'b' && k < 4)) return; let i = 1; while (add(r + x * i, c + y * i) && t !== 'k') i++; });
+    });
+    return out;
+  }
+  function askTop(key) { if (t3 && t3.key === key) return; const me = t3 = { key, r: null }; engineAsk(key, 700, 3).then(r => { if (t3 === me) { me.r = r; if (!(drag && drag.moved)) { drag = null; renderPieces(); } } }); }
+  function extras() {
+    if (review) return;
+    const solo = mode === 'bot' || mode === 'local', key = E.toFen(game.s);
+    if (admin && prefs.adMap && (solo || mode === 'puzzle')) {
+      const me = mode === 'local' ? 'w' : myColor, a = control(game.s.b, me), o = control(game.s.b, me === 'w' ? 'b' : 'w'), h = document.createElement('div');
+      h.className = 'heat squares';
+      for (let i = 0; i < 64; i++) { const sq = toSq(i), v = a[sq] - o[sq], d = document.createElement('div'); d.style.background = v ? (v > 0 ? 'rgba(40,190,90,' : 'rgba(225,55,55,') + Math.min(.6, .18 + Math.abs(v) * .14) + ')' : ''; h.append(d); }
+      piecesEl.prepend(h);
+    }
+    if (admin && prefs.adTop3 && solo && !finished && canMove()) {
+      askTop(key);
+      if (t3.key === key && t3.r) t3.r.slice(0, 3).reverse().forEach((x, i, l) => { const m = game.legal().find(q => E.uci(q) === x.u); if (m) piecesEl.append(arrowSvg(m.from, m.to, 'rgba(217,154,18,' + [.9, .5, .28][l.length - 1 - i] + ')')); });
+    }
+    if (peek && peek.key === key) piecesEl.append(arrowSvg(peek.m.from, peek.m.to, 'rgba(48,118,222,.85)'));
+  }
+  function autopilot() {
+    if (!(admin && prefs.adAuto) || mode !== 'bot' || coachGame || !canMove() || $('gameScreen').hidden) return;
+    const g = game, n = g.moves.length;
+    if (autopilot.g === g && autopilot.n === n) return;
+    autopilot.g = g; autopilot.n = n;
+    engineAsk(E.toFen(g.s), 400, 1).then(r => { if (autopilot.n === n) autopilot.g = null; if (game !== g || g.moves.length !== n || !prefs.adAuto || !canMove() || !r) return; const m = g.legal().find(x => E.uci(x) === r[0].u); if (m) commit(m, true); });
+  }
+  $('hpPeek').onclick = () => {
+    if ((mode !== 'bot' && mode !== 'local') || !canMove()) return toast('Peek on your turn in a computer or pass and play game.');
+    if (peeks <= 0) return toast('No peeks left this game.');
+    const key = E.toFen(game.s), g = game; peeks--; $('adminModal').hidden = true; show('game'); toast('Peeking… ' + plural(peeks, 'peek') + ' left.');
+    engineAsk(key, 500, 1).then(r => { const m = r && game === g && E.toFen(g.s) === key && g.legal().find(x => E.uci(x) === r[0].u); if (m) { peek = { key, m }; renderPieces(); } });
+  };
   function confetti() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const cv = document.createElement('canvas');
@@ -2781,7 +3080,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     })(t0);
   }
   const plainWin = sfx.win;
-  sfx.win = () => { plainWin(); if (admin && prefs.adParty) confetti(); };
+  sfx.win = () => { plainWin(); if ((admin || helper) && prefs.adParty) confetti(); };
   function takeBack() {
     if (mode !== 'bot' || !game.moves.length) { toast('Take back works in a computer game once a move has been made.'); return false; }
     clearTimeout(botTimer); thinking = false; finished = false; endInfo = null; review = null; reviewToken++;
