@@ -268,6 +268,23 @@ select.inp { flex: 0 1 auto }
   .moves { max-height: 240px }
 }
 .strip { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px 10px; min-height: 38px }
+/* getting around */
+.crumbs { display: flex; align-items: center; gap: 8px; min-height: 36px; min-width: 0 } .crumbs .btn { min-height: 34px; padding: 4px 12px } .crumb { border: 0; background: none; color: var(--muted); padding: 4px 2px } .crumb:hover { color: var(--ink); text-decoration: underline } .crumbs span { color: var(--muted) } .crumbs b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.sec { font: 700 18px var(--display); margin: 8px 0 -4px }
+.finds { display: flex; flex-direction: column; gap: 4px; max-height: 50vh; overflow-y: auto } .finds button { display: flex; gap: 10px; align-items: baseline; text-align: left; border: 1px solid transparent; background: none; border-radius: 10px; padding: 9px 12px } .finds button[aria-selected=true] { background: var(--surface-2); border-color: var(--accent) } .finds small { margin-left: auto; color: var(--muted) }
+#findIn { font-size: 18px; padding: 12px }
+.nav button { position: relative } .nav button.live::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #f6c43e; margin-left: auto }
+#setModal .adtabs { position: sticky; top: -14px; background: var(--surface); padding: 10px 0; z-index: 2 }
+.spane { display: flex; flex-direction: column; gap: 10px }
+@media (max-width: 999px) {
+  body { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) }
+  .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; width: auto; max-width: none; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; border-radius: 0; border-width: 1px 0 0; overflow: visible; padding: 6px max(6px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(6px, env(safe-area-inset-left, 0px)) }
+  .nav button { flex-direction: column; gap: 3px; padding: 6px 0; font-size: 11px; white-space: nowrap } .nav button::before { font-size: 22px } .nav button.live::after { position: absolute; top: 5px; right: 24%; margin: 0 }
+  .toast { bottom: calc(96px + env(safe-area-inset-bottom, 0px)) }
+}
+@media (min-width: 1000px) {
+  #gameScreen { gap: 8px } .boardcol { width: min(100%, calc(100vh - 168px)) !important; max-width: calc(100vh - 168px) !important } .boardcol.reviewing { width: min(100%, calc(100vh - 318px)) !important; max-width: calc(100vh - 318px) !important } .side.rvside { height: calc(100vh - 82px) !important }
+}
 /* review panel */
 #reviewCard { gap: 12px } .rvtop:empty, .rvfoot:empty { display: none }
 .rvhead { display: flex; align-items: center; gap: 10px } .rvhead h3 { flex: 1; font-size: 17px; text-transform: none; letter-spacing: 0; color: var(--ink) }
@@ -333,6 +350,7 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
     </nav>
     <div class="spacer"></div>
     <div class="chip" title="Your rating"><small>Your rating</small><b id="myElo">300</b><small id="myRec">0W 0L 0D</small></div>
+    <button class="icon-btn" id="findBtn" title="Ctrl or Cmd + K">Find anything</button>
     <button class="icon-btn namebtn" id="nameBtn" aria-label="Change your name"></button>
     <button class="icon-btn" id="adminBtn" hidden>Admin</button>
     <button class="icon-btn" id="setBtn">Settings</button>
@@ -347,12 +365,24 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
       </div>
       <div class="mini" id="miniBoard" aria-hidden="true"></div>
     </div>
+    <button class="btn primary big" id="continueBtn" hidden>Continue your game</button>
+    <h3 class="sec">Play and learn</h3>
+    <div class="modegrid">
+      <button class="modecard" data-go="bot"><span class="g" aria-hidden="true">&#9822;&#xFE0E;</span><span class="t"><b>Play the computer</b><small>Fourteen opponents, from beginner to strong.</small></span><span class="tag">Practice</span></button>
+      <button class="modecard" data-go="online"><span class="g" aria-hidden="true">&#9819;&#xFE0E;</span><span class="t"><b>Play a classmate</b><small>Play a friend online and move your rating.</small></span><span class="tag">Rated</span></button>
+      <button class="modecard" data-go="coach"><span class="g" aria-hidden="true">&#9821;&#xFE0E;</span><span class="t"><b>Play your coach</b><small>Your coach plays you and comments on every move.</small></span><span class="tag">Learn</span></button>
+      <button class="modecard" data-go="local"><span class="g" aria-hidden="true">&#9823;&#xFE0E;</span><span class="t"><b>Pass &amp; play</b><small>Two people take turns on this screen.</small></span><span class="tag">Practice</span></button>
+      <button class="modecard" data-go="puzzle"><span class="g" aria-hidden="true">&#9820;&#xFE0E;</span><span class="t"><b>Puzzles</b><small>Easy to expert, with your own puzzle rating.</small></span><span class="tag" id="pzTag">Train</span></button>
+    </div>
     <div class="stats">
       <div class="stat"><small>Your rating</small><b id="hsElo">300</b></div>
       <div class="stat"><small>Wins, losses, draws</small><b id="hsRec">0-0-0</b></div>
       <div class="stat"><small>Puzzles solved</small><b id="hsPz">0</b></div>
       <div class="stat"><small>Puzzle rating</small><b id="hsStreak">400</b></div>
     </div>
+    <div class="card" id="homeHist" hidden><h3>Recent games</h3><div class="hist" id="histList"></div></div>
+    <div class="card" id="homeLadder" hidden><h3>Class ladder</h3><div class="list" id="homeLadderList"></div></div>
+    <h3 class="sec">Make it yours</h3>
     <div class="card coachcard">
       <div class="avatar" id="hcAv"></div>
       <span class="t"><small>Your game review coach</small><b id="hcName"></b><small id="hcTag"></small></span>
@@ -362,19 +392,10 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
       <span class="t"><small>Board colours</small><b id="themeName"></b><small>Changes every board on this device.</small></span>
       <div class="row" id="homeThemes"></div>
     </div>
-    <button class="btn primary big" id="continueBtn" hidden>Continue your game</button>
-    <div class="modegrid">
-      <button class="modecard" data-go="bot"><span class="g" aria-hidden="true">&#9822;&#xFE0E;</span><span class="t"><b>Play the computer</b><small>Fourteen opponents, from beginner to strong.</small></span><span class="tag">Practice</span></button>
-      <button class="modecard" data-go="online"><span class="g" aria-hidden="true">&#9819;&#xFE0E;</span><span class="t"><b>Play a classmate</b><small>Play a friend online and move your rating.</small></span><span class="tag">Rated</span></button>
-      <button class="modecard" data-go="coach"><span class="g" aria-hidden="true">&#9821;&#xFE0E;</span><span class="t"><b>Play your coach</b><small>Your coach plays you and comments on every move.</small></span><span class="tag">Learn</span></button>
-      <button class="modecard" data-go="local"><span class="g" aria-hidden="true">&#9823;&#xFE0E;</span><span class="t"><b>Pass &amp; play</b><small>Two people take turns on this screen.</small></span><span class="tag">Practice</span></button>
-      <button class="modecard" data-go="puzzle"><span class="g" aria-hidden="true">&#9820;&#xFE0E;</span><span class="t"><b>Puzzles</b><small>Easy to expert, with your own puzzle rating.</small></span><span class="tag" id="pzTag">Train</span></button>
-    </div>
-    <div class="card" id="homeHist" hidden><h3>Recent games</h3><div class="hist" id="histList"></div></div>
-    <div class="card" id="homeLadder" hidden><h3>Class ladder</h3><div class="list" id="homeLadderList"></div></div>
   </section>
 
   <div class="screen" id="gameScreen" hidden>
+  <nav class="crumbs" aria-label="Where you are"><button class="btn" id="backBtn">&#8592; Back</button><button class="crumb" id="cr1">Home</button><span>/</span><button class="crumb" id="cr2"></button><span id="crS">/</span><b id="cr3"></b></nav>
   
 
   <main>
@@ -571,6 +592,9 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
     </div>
   </div>
 </div>
+<div class="modal" id="findModal" hidden>
+  <div class="card" role="dialog" aria-label="Find anything"><input class="inp" id="findIn" placeholder="Find a page, bot, coach, setting or game" autocomplete="off" spellcheck="false" aria-label="Find"><div class="finds" id="findList"></div><p class="note">Arrow keys to choose, Enter to open, Esc to close.</p></div>
+</div>
 <div class="modal" id="setModal" hidden>
   <div class="card admin" role="dialog" aria-labelledby="setHead">
     <h3 id="setHead">Settings</h3>
@@ -591,8 +615,9 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
     <div class="setrow"><label for="setVol">Volume</label><input type="range" id="setVol" min="0" max="100" step="5"></div>
     <b>You</b>
     <div class="setrow"><span id="setName"></span><button class="btn" id="setNameBtn">Change name</button></div>
+    <div class="setrow"><span>Admin or helper code</span><button class="btn" id="setAdmin">Enter code</button></div>
     <b>Keyboard shortcuts</b>
-    <p class="note">F flips the board. Esc closes a window. In a game review, the left and right arrow keys step through the moves.</p>
+    <p class="note">Keys 1 to 6 open the pages in the menu. Ctrl or Cmd + K finds anything. F flips the board. Esc closes a window. In a game review, the left and right arrow keys step through the moves.</p>
     <p class="note">Unfinished computer and pass and play games are saved on this device, so you can carry on after closing the page.</p>
     <div class="row"><button class="btn primary" id="setDone">Done</button></div>
   </div>
@@ -1358,7 +1383,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     $('myElo').textContent = profile.elo;
     $('myRec').textContent = profile.w + 'W ' + profile.l + 'L ' + profile.d + 'D';
   }
-  function render(anim) { renderSquares(); renderPieces(anim); renderStrips(); renderMoves(); renderStatus(); renderReview(); saveGame(); autopilot(); }
+  function render(anim) { renderSquares(); renderPieces(anim); renderStrips(); renderMoves(); renderStatus(); renderReview(); saveGame(); autopilot(); paintCrumbs(); }
 
   /* ---------- playing moves ---------- */
   function canMove() {
@@ -1579,9 +1604,11 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       leaveArmed = Date.now(); toast('Leaving now counts as a loss. Click again to leave.'); return;
     }
     leaveArmed = 0;
+    stashGame();
     if (mode === 'online') closeOnline();
     mode = m; coachGame = wantCoach; bossGame = false;
     newGame();
+    unstash(wantCoach ? 'coach' : m);
   }
 
   /* ---------- controls ---------- */
@@ -1597,12 +1624,49 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     prefs.color = b.dataset.c; store.set('cc-prefs', prefs); paintColorSeg();
     if (mode === 'bot' && !inProgress()) newGame();
   });
+  const NAMES = { home: 'Home', bot: 'Computer', coach: 'Coach', online: 'Online', local: 'Pass & play', puzzle: 'Puzzles' };
+  const ROUTE = { home: 'home', bot: 'computer', coach: 'coach', online: 'online', local: 'pass-and-play', puzzle: 'puzzles' };
+  const inFrame = location.protocol === 'about:';
+  const here = () => ($('gameScreen').hidden ? 'home' : mode === 'bot' && coachGame ? 'coach' : mode);
+  const trail = []; let routing = false;
+  function paintCrumbs() {
+    const h = here(), third = review ? 'Game review' : h === 'bot' || h === 'coach' ? foe().name : h === 'puzzle' && puzzle ? TYPE_NAMES[puzzle.p.t] : histNames ? 'Past game' : '';
+    $('cr2').textContent = NAMES[h]; $('cr3').textContent = third; $('crS').hidden = !third;
+    document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('live', !!stash[b.dataset.go] || (b.dataset.go !== 'home' && b.dataset.go === (mode === 'bot' && coachGame ? 'coach' : mode) && mode !== 'puzzle' && inProgress())));
+  }
+  function setRoute() {
+    const h = here();
+    if (trail[trail.length - 1] !== h) { trail.push(h); if (trail.length > 40) trail.shift(); }
+    if (inFrame || routing) return;
+    const want = '#' + ROUTE[h];
+    if (location.hash !== want && !(h === 'home' && !location.hash)) { try { location.hash = want; } catch (e) {} }
+  }
+  function goBack() {
+    if (review) return closeReview();
+    trail.pop();
+    const to = trail.pop() || 'home';
+    goTo(to);
+  }
+  /* unfinished games wait in their own section while you look around */
+  const stash = {};
+  function stashGame() {
+    if ((mode !== 'bot' && mode !== 'local') || !inProgress() || histNames) return;
+    stopClock(); clearTimeout(botTimer);
+    stash[mode === 'bot' && coachGame ? 'coach' : mode] = { game, myColor, botLevel, bossGame, flipped, lastMove, clock, vs };
+  }
+  function unstash(k) {
+    const g = stash[k]; if (!g) return;
+    delete stash[k];
+    clearTimeout(botTimer); thinking = false; finished = false; endInfo = null; selected = -1;
+    ({ game, myColor, botLevel, bossGame, flipped, lastMove, clock, vs } = g);
+    render();
+  }
   function show(screen) {
     $('homeScreen').hidden = screen !== 'home'; $('gameScreen').hidden = screen !== 'game';
     const cur = screen === 'home' ? 'home' : mode === 'bot' && coachGame ? 'coach' : mode;
     document.querySelectorAll('.nav button').forEach(b => { if (b.dataset.go === cur) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-    if (screen === 'home') { $('continueBtn').hidden = mode === 'puzzle' || !(game.moves.length || og); renderHome(); }
-    else render();
+    if (screen === 'home') renderHome(); else render();
+    paintCrumbs(); setRoute(); scrollTo(0, 0);
   }
   function goTo(dest) {
     audio();
@@ -2060,7 +2124,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   document.addEventListener('keydown', e => {
     const tag = (e.target && e.target.tagName) || '';
     if (e.key === 'Escape') {
-      ['setModal', 'coachModal', 'adminModal'].forEach(id => { $(id).hidden = true; });
+      ['setModal', 'coachModal', 'adminModal', 'findModal'].forEach(id => { $(id).hidden = true; });
       if (prefs.name) $('nameModal').hidden = true;
       return;
     }
@@ -3335,7 +3399,66 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     else { const g = og; g.q = g.q.then(() => g.ref.update({ drawOffer: null })).catch(() => {}); }
     drawIncoming = -1; renderStatus();
   };
-  const checkHash = () => { if (location.hash === '#admin') openAdmin(); };
+  const checkHash = () => {
+    if (location.hash === '#admin') return openAdmin();
+    const k = Object.keys(ROUTE).find(x => '#' + ROUTE[x] === location.hash) || (location.hash ? '' : 'home');
+    if (!k || k === here()) return;
+    routing = true;
+    if (k === 'home') show('home'); else { setMode(k); show('game'); resumeIfNeeded(); }
+    routing = false; setRoute();
+  };
+  $('backBtn').onclick = goBack; $('cr1').onclick = () => goTo('home'); $('cr2').onclick = () => { if (review) closeReview(); };
+  $('setAdmin').onclick = () => { $('setModal').hidden = true; openAdmin(); };
+  (function () { /* settings become tabs */
+    const card = $('setModal').firstElementChild, heads = [...card.querySelectorAll(':scope > b')], tabs = document.createElement('div'), panes = [];
+    tabs.className = 'adtabs'; heads[0].before(tabs);
+    heads.forEach((h, i) => {
+      const pane = document.createElement('div'); pane.className = 'spane'; h.before(pane);
+      let n = h.nextElementSibling; while (n && n.tagName !== 'B' && !n.contains($('setDone'))) { const nx = n.nextElementSibling; pane.append(n); n = nx; }
+      const b = document.createElement('button'); b.textContent = h.textContent === 'Keyboard shortcuts' ? 'Help' : h.textContent; b.type = 'button'; h.remove(); tabs.append(b); panes.push(pane);
+      b.onclick = () => pick(i);
+    });
+    function pick(i) { panes.forEach((q, k) => { q.hidden = k !== i; tabs.children[k].setAttribute('aria-pressed', k === i); }); }
+    pick(0);
+    window.ccSettings = i => { pick(i); $('setBtn').onclick(); };
+  })();
+  /* find anything */
+  let findAt = 0, found = [];
+  function findItems() {
+    const it = Object.keys(NAMES).map(k => [NAMES[k], 'Page', () => goTo(k)]);
+    it.push(['Continue your game', 'Game', () => $('continueBtn').onclick()]);
+    if ($('continueBtn').hidden) it.pop();
+    BOTS.forEach((b, i) => it.push(['Play ' + b.name, 'Bot, strength ' + b.elo, () => { if (stash.bot || (mode === 'bot' && !coachGame && inProgress())) { goTo('bot'); return toast('Finish or resign this game first, then pick a new bot.'); } prefs.bot = i; store.set('cc-prefs', prefs); goTo('bot'); if (mode === 'bot') { bossGame = false; newGame(); } }]));
+    LEVELS.forEach(l => it.push([l.name + ' puzzles', 'Puzzles', () => { goTo('puzzle'); if (mode === 'puzzle') loadPuzzle(l.id); }]));
+    COACHES.forEach(c => it.push([c.name, 'Choose as your coach', () => { prefs.coach = c.id; store.set('cc-prefs', prefs); renderHome(); render(); toast(c.name + ' is your coach.'); }]));
+    BOARD_THEMES.filter(themeOk).forEach(t => it.push([t.name + ' board', 'Board colours', () => { prefs.boardTheme = t.id; store.set('cc-prefs', prefs); applyTheme(); paintThemes(); }]));
+    ['Look', 'Playing', 'Sound', 'You', 'Help'].forEach((n, i) => it.push(['Settings: ' + n, 'Settings', () => window.ccSettings(i)]));
+    it.push(['Change your name', 'Settings', askName]);
+    store.get('cc-hist', []).slice(0, 8).forEach(g => it.push(['Review ' + g.w + ' vs ' + g.b, Math.ceil(g.m.length / 2) + ' moves', () => openHist(g)]));
+    if (admin || helper) it.push([admin ? 'Control room' : 'Helper', 'Admin', openAdmin]);
+    return it;
+  }
+  function paintFind() {
+    const q = $('findIn').value.trim().toLowerCase(), box = $('findList');
+    found = findItems().filter(x => (x[0] + ' ' + x[1]).toLowerCase().includes(q)).slice(0, 40);
+    findAt = Math.max(0, Math.min(findAt, found.length - 1)); box.textContent = '';
+    if (!found.length) { const n = document.createElement('p'); n.className = 'note'; n.textContent = 'Nothing found. Try a bot name, a coach or a page.'; box.append(n); }
+    found.forEach((x, i) => { const b = document.createElement('button'), sm = document.createElement('small'); sm.textContent = x[1]; b.append(x[0], sm); b.setAttribute('aria-selected', i === findAt); b.onclick = () => runFind(i); box.append(b); if (i === findAt) b.scrollIntoView({ block: 'nearest' }); });
+  }
+  function runFind(i) { const x = found[i]; if (!x) return; $('findModal').hidden = true; x[2](); }
+  function openFind() { $('findIn').value = ''; findAt = 0; $('findModal').hidden = false; paintFind(); setTimeout(() => $('findIn').focus(), 20); }
+  $('findBtn').onclick = openFind; $('findIn').oninput = () => { findAt = 0; paintFind(); };
+  $('findModal').onclick = e => { if (e.target === $('findModal')) $('findModal').hidden = true; };
+  $('findIn').onkeydown = e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); findAt += e.key === 'ArrowDown' ? 1 : -1; paintFind(); }
+    else if (e.key === 'Enter') { e.preventDefault(); runFind(findAt); }
+  };
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); return openFind(); }
+    if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('.modal:not([hidden])')) return;
+    const b = /^[1-6]$/.test(e.key) && document.querySelectorAll('.nav button')[+e.key - 1];
+    if (b) goTo(b.dataset.go);
+  });
   window.addEventListener('hashchange', checkHash);
 
   applyTheme(); paintName(); paintAdmin();
