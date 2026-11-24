@@ -268,6 +268,25 @@ select.inp { flex: 0 1 auto }
   .moves { max-height: 240px }
 }
 .strip { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px 10px; min-height: 38px }
+/* make it yours */
+.pav { flex: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: #fff; font: 19px/1 "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols2", sans-serif }
+.cust { display: flex; flex-direction: column; gap: 14px } .cust h4 { margin: 0 0 6px; font: 700 14px var(--display) }
+.opts { display: flex; flex-wrap: wrap; gap: 8px } .opts button { border: 2px solid var(--line); background: var(--surface-2); border-radius: 12px; min-width: 44px; height: 44px; padding: 0 12px; font-weight: 600 } .opts button[aria-pressed=true] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) } .opts .sw1 { padding: 0; border-radius: 50% } .opts .gl { font: 25px/1 "Segoe UI Symbol", "Apple Symbols", sans-serif; padding: 0 }
+.lookrow { display: flex; gap: 16px; align-items: center; flex-wrap: wrap } .lookrow .pav { width: 64px; height: 64px; border-radius: 18px; font-size: 44px } .lookrow b { font: 700 22px var(--display) }
+.pvw { position: relative; width: 176px; aspect-ratio: 1; container-type: inline-size; border-radius: 10px; overflow: hidden; flex: none } .pvw .squares { grid-template: repeat(4, 1fr) / repeat(4, 1fr) } .pvw .piece { width: 25%; height: 25%; font-size: 21cqw; -webkit-text-stroke-width: .7cqw }
+#introModal .card { max-width: 640px; gap: 16px } .idots { display: flex; gap: 6px } .idots i { flex: 1; height: 6px; border-radius: 9px; background: var(--line) } .idots i.on { background: var(--accent) }
+#introModal h2 { font: 700 28px/1.1 var(--display); margin: 0; text-wrap: balance } #introModal .inp { font-size: 20px; padding: 12px; min-height: 52px; flex: none }
+.picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px } .pick { text-align: left; border: 2px solid var(--line); background: var(--surface-2); border-radius: 14px; padding: 12px; display: flex; flex-direction: column } .pick small { color: var(--muted) } .pick[aria-pressed=true] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) }
+.ifoot { display: flex; gap: 8px; justify-content: space-between }
+.lboard { position: relative; width: min(100%, 400px, 52vh); aspect-ratio: 1; align-self: center; container-type: inline-size; border-radius: 10px; overflow: hidden; touch-action: manipulation; cursor: pointer; user-select: none; -webkit-user-select: none }
+.lboard .piece { transition: transform .16s } .ltext { font-size: 17px; min-height: 52px } .lbar { height: 8px; border-radius: 9px; background: var(--line) } .lbar i { display: block; height: 100%; border-radius: 9px; background: #2f9e5b; transition: width .3s }
+.qc { display: flex; flex-wrap: wrap; gap: 6px } .qc button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 99px; padding: 5px 12px; font-size: 14px }
+.say { background: #f6c43e; color: #1d2326; border-radius: 10px 10px 10px 2px; padding: 2px 10px; font-weight: 600; font-size: 13.5px; white-space: nowrap; animation: pop .2s }
+.rush { display: flex; align-items: center; gap: 14px; font-variant-numeric: tabular-nums } .rush b { font: 700 30px var(--display) } .rush .x { color: var(--bad); font-size: 22px; letter-spacing: 3px }
+body.ps-wood .piece.w { color: #f0d2a0; -webkit-text-stroke-color: #5a3512 } body.ps-wood .piece.b { color: #6b3f1d; -webkit-text-stroke-color: #2b1606 }
+body.ps-candy .piece.w { color: #fff0f7; -webkit-text-stroke-color: #e0569a } body.ps-candy .piece.b { color: #7c3fd0; -webkit-text-stroke-color: #3d1480 }
+body.ps-ocean .piece.w { color: #eafaff; -webkit-text-stroke-color: #14628a } body.ps-ocean .piece.b { color: #0f4f7a; -webkit-text-stroke-color: #04243a }
+body.ps-forest .piece.w { color: #f3f7e4; -webkit-text-stroke-color: #3f6b2b } body.ps-forest .piece.b { color: #2d5226; -webkit-text-stroke-color: #10230c }
 /* getting around */
 .crumbs { display: flex; align-items: center; gap: 8px; min-height: 36px; min-width: 0 } .crumbs .btn { min-height: 34px; padding: 4px 12px } .crumb { border: 0; background: none; color: var(--muted); padding: 4px 2px } .crumb:hover { color: var(--ink); text-decoration: underline } .crumbs span { color: var(--muted) } .crumbs b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .sec { font: 700 18px var(--display); margin: 8px 0 -4px }
@@ -373,6 +392,9 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
       <button class="modecard" data-go="coach"><span class="g" aria-hidden="true">&#9821;&#xFE0E;</span><span class="t"><b>Play your coach</b><small>Your coach plays you and comments on every move.</small></span><span class="tag">Learn</span></button>
       <button class="modecard" data-go="local"><span class="g" aria-hidden="true">&#9823;&#xFE0E;</span><span class="t"><b>Pass &amp; play</b><small>Two people take turns on this screen.</small></span><span class="tag">Practice</span></button>
       <button class="modecard" data-go="puzzle"><span class="g" aria-hidden="true">&#9820;&#xFE0E;</span><span class="t"><b>Puzzles</b><small>Easy to expert, with your own puzzle rating.</small></span><span class="tag" id="pzTag">Train</span></button>
+      <button class="modecard" id="hDaily"><span class="g" aria-hidden="true">&#9819;&#xFE0E;</span><span class="t"><b>Daily puzzle</b><small>The same puzzle for everyone, once a day.</small></span><span class="tag" id="hDailyTag">Daily</span></button>
+      <button class="modecard" id="hRush"><span class="g" aria-hidden="true">&#9822;&#xFE0E;</span><span class="t"><b>Puzzle Rush</b><small>Three minutes, three misses. How many can you solve?</small></span><span class="tag" id="hRushTag">Best 0</span></button>
+      <button class="modecard" id="hLearn"><span class="g" aria-hidden="true">&#9823;&#xFE0E;</span><span class="t"><b>Learn chess</b><small>A hands-on tutorial, about five minutes.</small></span><span class="tag" id="hLearnTag">Learn</span></button>
     </div>
     <div class="stats">
       <div class="stat"><small>Your rating</small><b id="hsElo">300</b></div>
@@ -388,6 +410,7 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
       <span class="t"><small>Your game review coach</small><b id="hcName"></b><small id="hcTag"></small></span>
       <button class="btn" id="hcChange">Change coach</button>
     </div>
+    <div class="card coachcard"><div class="pav" id="hcPav" style="width:40px;height:40px;font-size:28px"></div><span class="t"><small>Your player</small><b id="hcMe"></b><small>Icon, colours, board and pieces.</small></span><button class="btn" id="custBtn">Customise</button></div>
     <div class="card coachcard">
       <span class="t"><small>Board colours</small><b id="themeName"></b><small>Changes every board on this device.</small></span>
       <div class="row" id="homeThemes"></div>
@@ -413,7 +436,7 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
           <div class="rvlinks"><button id="rvSumBtn">Summary</button><button id="rvPlay">Play through</button><button id="rvCoach">Change coach</button><button id="rvDone">Close review</button></div>
         </div>
       </div>
-      <div class="strip" id="stripTop"><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="caps"></span><span class="clk" hidden></span></div>
+      <div class="strip" id="stripTop"><span class="pav" hidden></span><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="say" hidden></span><span class="caps"></span><span class="clk" hidden></span></div>
       <div class="boardrow"><div class="evalv" id="evalV" hidden><div></div><span></span></div>
       <div class="board" id="board">
         <div class="squares" id="squares"></div>
@@ -427,7 +450,7 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
         </div>
       </div>
       </div>
-      <div class="strip" id="stripBot"><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="caps"></span><span class="clk" hidden></span></div>
+      <div class="strip" id="stripBot"><span class="pav" hidden></span><span class="dot"></span><span class="nm"></span><span class="elo"></span><span class="say" hidden></span><span class="caps"></span><span class="clk" hidden></span></div>
       <div class="evalbar" id="liveEval" hidden title="Who is ahead"><div id="liveEvalFill"></div><span id="liveEvalTxt"></span></div>
     </div>
 
@@ -437,10 +460,12 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
         <div class="status" id="status" aria-live="polite">Your move.</div>
         <p class="note stakes" id="stakes" hidden></p>
         <div class="row" id="drawAsk" hidden><span class="label" id="drawAskTxt"></span><button class="btn primary" id="drawYes">Accept draw</button><button class="btn" id="drawNo">Decline</button></div>
+        <div class="qc" id="qc" hidden></div>
         <div class="moves" id="moves"></div>
         <span id="movesHome" hidden></span>
         <div class="row">
           <button class="btn primary" id="mainBtn">New game</button>
+          <button class="btn primary" id="rematchBtn" hidden>Rematch</button>
           <button class="btn" id="reviewBtn" hidden>Review game</button>
           <button class="btn" id="drawBtn" hidden>Offer draw</button>
           <button class="btn" id="undoBtn">Undo</button>
@@ -449,7 +474,9 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
       </div>
 
       <div class="card" id="puzzleCard" hidden>
-        <h3>Pick a difficulty</h3>
+        <div class="rush" id="rushBox" hidden><b id="rushTime"></b><span><b id="rushScore"></b> solved</span><span class="x" id="rushX"></span></div>
+        <div class="row" id="pzModes"><button class="btn primary" id="dailyBtn">Daily puzzle</button><button class="btn" id="rushBtn">Puzzle Rush</button></div>
+        <h3 id="pzHead">Pick a difficulty</h3>
         <div class="themes" id="puzzleThemes"></div>
         <div class="pzinfo"><span class="pill" id="pzLevel"></span><b id="pzType"></b><span class="num" id="pzRating"></span></div>
         <p class="note" id="puzzleMsg" aria-live="polite"></p>
@@ -592,6 +619,9 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
     </div>
   </div>
 </div>
+<div class="modal" id="introModal" hidden><div class="card" role="dialog" aria-label="Welcome"><div class="idots" id="idots"></div><div id="ibody" class="cust"></div><div class="ifoot"><button class="btn" id="iBack">Back</button><button class="btn primary big" id="iNext">Next</button></div></div></div>
+<div class="modal" id="custModal" hidden><div class="card"><h3>Customise</h3><div class="cust" id="custBody"></div><div class="row"><button class="btn primary" id="custDone">Done</button></div></div></div>
+<div class="modal" id="learnModal" hidden><div class="card" role="dialog" aria-label="Chess tutorial"><h3 id="lHead">Tutorial</h3><div class="lbar"><i id="lBar"></i></div><p class="ltext" id="lText" aria-live="polite"></p><div class="lboard" id="lBoard"></div><div class="ifoot"><button class="btn" id="lQuit">Leave tutorial</button><button class="btn primary" id="lNext">Next</button></div></div></div>
 <div class="modal" id="findModal" hidden>
   <div class="card" role="dialog" aria-label="Find anything"><input class="inp" id="findIn" placeholder="Find a page, bot, coach, setting or game" autocomplete="off" spellcheck="false" aria-label="Find"><div class="finds" id="findList"></div><p class="note">Arrow keys to choose, Enter to open, Esc to close.</p></div>
 </div>
@@ -600,6 +630,7 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
     <h3 id="setHead">Settings</h3>
     <b>Look</b>
     <div class="setrow"><span>Page theme</span><div class="seg" id="setTheme"><button data-v="system">System</button><button data-v="light">Light</button><button data-v="dark">Dark</button></div></div>
+    <div class="setrow"><span>Your player and pieces</span><button class="btn" id="setCust">Customise</button></div>
     <div class="setrow stack"><span>Board colours</span><div class="row" id="setThemes"></div></div>
     <div class="setrow"><span>Piece movement</span><div class="seg" id="setAnim"><button data-v="off">Instant</button><button data-v="normal">Normal</button><button data-v="slow">Slow</button></div></div>
     <label class="setrow" for="setCoords"><span>Show board coordinates</span><input type="checkbox" id="setCoords"></label>
@@ -608,6 +639,7 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
     <b>Playing</b>
     <label class="setrow" for="setQueen"><span>Always promote to a queen</span><input type="checkbox" id="setQueen"></label>
     <label class="setrow" for="setPre"><span>Premoves (move on your opponent's turn)</span><input type="checkbox" id="setPre"></label>
+    <label class="setrow" for="setChat"><span>Quick chat in online games</span><input type="checkbox" id="setChat"></label>
     <label class="setrow" for="setConfirm"><span>Confirm before resigning</span><input type="checkbox" id="setConfirm"></label>
     <div class="setrow"><label for="setClock">Clock for new games</label><select class="inp clocksel" id="setClock"><option value="none">No clock</option><option value="1+0">1 minute</option><option value="3+0">3 minutes</option><option value="3+2">3 min + 2 sec a move</option><option value="5+0">5 minutes</option><option value="10+0">10 minutes</option><option value="15+10">15 min + 10 sec a move</option><option value="custom">Custom</option></select></div>
     <b>Sound</b>
@@ -1107,19 +1139,24 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   const FRESH = { elo: 300, rd: 110, w: 0, l: 0, d: 0, v: 3 };
   const savedProfile = store.get('cc-profile', {}); /* older saves are dropped: ratings restarted at 300 */
   let profile = Object.assign({}, FRESH, savedProfile.v === 3 ? savedProfile : {});
-  let prefs = Object.assign({ sound: true, bot: 1, color: 'w', coach: 'maple', vol: 70, anim: 'normal', dots: true, coords: true, hiLast: true, autoQueen: false, confirmResign: true, premove: true, coachLvl: 1, uiTheme: 'system', clock: 'none' }, store.get('cc-prefs', {}));
+  let prefs = Object.assign({ sound: true, bot: 1, color: 'w', coach: 'maple', vol: 70, anim: 'normal', dots: true, coords: true, hiLast: true, autoQueen: false, confirmResign: true, premove: true, coachLvl: 1, chat: true, av: 'n', avc: 0, accent: 0, pieceSet: '', uiTheme: 'system', clock: 'none' }, store.get('cc-prefs', {}));
   if (!(prefs.bot >= 0 && prefs.bot < BOTS.length)) prefs.bot = 1;
   let game = new E.Game();
   let mode = 'bot', myColor = 'w', flipped = false, selected = -1, lastMove = null;
   let finished = false, thinking = false, botTimer = 0, drag = null, endInfo = null;
   let review = null, reviewToken = 0;
   const ADMIN_HASH = 'dd7ee760ac043fb45203d43fe2599aa9177603cd108fb8cd77a3071c6356f288';
-  let drawSentAt = -1, drawIncoming = -1, leaveArmed = 0, clock = null, clockTimer = 0, coachGame = false, vs = null, vsHintState = null, premove = null, histNames = null;
+  let drawSentAt = -1, drawIncoming = -1, leaveArmed = 0, clock = null, clockTimer = 0, coachGame = false, vs = null, vsHintState = null, premove = null, histNames = null, rush = null, oppAv = { g: 'p', c: 7 }, says = { w: '', b: '' };
   const pendingSave = store.get('cc-save', null);
   const TCS = ['none', '1+0', '3+0', '3+2', '5+0', '10+0', '15+10'];
   const HELPER_HASH = '60d6d7d0cfbcee9e774d97afb0dc974afa8c4fe340904b4e62805477c88754fd';
   let helper = store.get('cc-admin', false) === 'helper', bossGame = false, editPiece = '', peeks = 3, peek = null, t3 = null;
   let admin = store.get('cc-admin', false) === true, amOwner = false, hintCache = { key: '', m: null };
+  const ACCENTS = [['Teal', ''], ['Blue', '#3478d8'], ['Purple', '#8657dc'], ['Pink', '#d3467f'], ['Orange', '#c2621a'], ['Green', '#2f8a4c']];
+  const AVC = ['#1b7279', '#3478d8', '#8657dc', '#d3467f', '#c2621a', '#2f8a4c', '#b03030', '#4a5560'];
+  const SETS = [['', 'Classic'], ['wood', 'Wood'], ['candy', 'Candy'], ['ocean', 'Ocean'], ['forest', 'Forest']];
+  const cleanAv = a => ({ g: a && 'kqrbnp'.includes(a.g) && String(a.g).length === 1 ? a.g : 'p', c: a && AVC[a.c] ? +a.c : 7 });
+  const myAv = () => cleanAv({ g: prefs.av, c: prefs.avc });
   const BOARD_THEMES = [
     { id: 'lagoon', name: 'Lagoon', light: '#ece6d6', dark: '#5b8790', base: true },
     { id: 'meadow', name: 'Meadow', light: '#e8edd5', dark: '#6f9a52' },
@@ -1308,6 +1345,9 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       const info = sideInfo(color), other = color === 'w' ? 'b' : 'w', cap = captured(other);
       el.querySelector('.dot').className = 'dot ' + color;
       el.querySelector('.nm').textContent = info.name; el.querySelector('.nm').classList.toggle('crown', admin && !!prefs.adCrown && mode !== 'local' && mode !== 'puzzle' && color === myColor);
+      const pa = el.querySelector('.pav'), av = mode === 'bot' ? (color === myColor ? myAv() : coachGame ? { g: coach().glyph, col: coach().color } : { g: 'r', c: 7 }) : mode === 'online' && og && og.data && og.data[color] ? (color === myColor ? myAv() : oppAv) : null;
+      pa.hidden = !av; if (av) { pa.textContent = glyph(av.g); pa.style.background = av.col || AVC[av.c]; }
+      const sb = el.querySelector('.say'), sy = says[color]; sb.hidden = !sy; if (sy) sb.textContent = sy;
       el.querySelector('.elo').textContent = info.elo === '' ? '' : '(' + info.elo + ')';
       const caps = el.querySelector('.caps');
       caps.textContent = cap.s;
@@ -1374,7 +1414,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     if (mode === 'puzzle') renderPuzzleCard();
     renderHome(); renderRooms();
     $('reviewBtn').hidden = !finished || game.moves.length < 2 || !!review;
-    $('reviewCard').hidden = !review;   placeReview(); $('boardCol').classList.toggle('reviewing', (!!review && !wide()) || (mode === 'bot' && coachGame)); renderVs(); renderStakes();
+    $('reviewCard').hidden = !review;   placeReview(); $('boardCol').classList.toggle('reviewing', (!!review && !wide()) || (mode === 'bot' && coachGame)); renderVs(); renderStakes(); renderOnlineBits();
     $('botCard').hidden = mode !== 'bot' || coachGame || !!review; $('coachCard').hidden = mode !== 'bot' || !coachGame || !!review;
     $('localCard').hidden = mode !== 'local' || !!review;
     $('lobbyCard').hidden = mode !== 'online' || !!review;
@@ -1666,7 +1706,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     const cur = screen === 'home' ? 'home' : mode === 'bot' && coachGame ? 'coach' : mode;
     document.querySelectorAll('.nav button').forEach(b => { if (b.dataset.go === cur) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     if (screen === 'home') renderHome(); else render();
-    paintCrumbs(); setRoute(); scrollTo(0, 0);
+    paintCrumbs(); setRoute(); scrollTo(0, 0); if (rush && here() !== 'puzzle') endRush();
   }
   function goTo(dest) {
     audio();
@@ -1709,6 +1749,8 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     $('hsRec').textContent = profile.w + '-' + profile.l + '-' + profile.d;
     $('hsPz').textContent = solved + ' of ' + total;
     $('hsStreak').textContent = pz.rating;
+    $('hDailyTag').textContent = pz.day === dayKey() ? 'Done, streak ' + (pz.dayStreak || 1) : 'New'; $('hRushTag').textContent = 'Best ' + (pz.rush || 0); $('hLearnTag').textContent = store.get('cc-learn', 0) ? 'Finished' : 'Start';
+    $('hcPav').textContent = glyph(myAv().g); $('hcPav').style.background = AVC[myAv().c]; $('hcMe').textContent = prefs.name || 'Player';
     $('pzTag').textContent = solved + '/' + total;
     const canContinue = mode !== 'puzzle' && !finished && !!(game.moves.length || og);
     $('continueBtn').hidden = !canContinue;
@@ -1745,7 +1787,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   }
   const savePz = () => store.set('cc-puzzles2', pz);
   function ratePuzzle(score) {
-    if (!puzzle || puzzle.rated || pz.done[puzzle.p.id]) return null;
+    if (!puzzle || rush || puzzle.rated || pz.done[puzzle.p.id]) return null;
     puzzle.rated = true;
     const k = pz.n < 15 ? 40 : 20, exp = 1 / (1 + Math.pow(10, (puzzle.p.r - pz.rating) / 400));
     const d = Math.round(k * (score - exp));
@@ -1777,6 +1819,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   }
   function puzzleMove(m, slide, auto) {
     if (!m) return;
+    if (rush && !auto && !puzzleOk(m)) { rush.miss++; sfx.wrong(); [m.from, m.to].forEach(sq => sqEls[toSq(sq)].classList.add('bad')); selected = -1; if (rush.miss >= 3) return endRush(); thinking = true; const r0 = rush; setTimeout(() => { thinking = false; if (rush === r0) nextRush(); }, 450); return renderRush(); }
     if (!auto && !puzzleOk(m)) {
       puzzle.clean = false; selected = -1; sfx.wrong();
       const d = ratePuzzle(0);
@@ -1792,6 +1835,8 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     puzzle.ply++;
     if (q.t === 'win' || isMate(game.s) || (onLine && puzzle.ply >= q.line.length)) {
       puzzle.solved = true;
+      if (rush) { rush.score++; sfx.promote(); const r0 = rush; render(slide ? m : null); setTimeout(() => { if (rush === r0) nextRush(); }, 350); return; }
+      if (puzzle.daily && !auto) dailyDone(puzzle.daily, puzzle.clean);
       if (auto) { puzzle.msg = 'That was the answer. Have a go at the next one.'; puzzle.tone = ''; }
       else {
         const d = puzzle.clean ? ratePuzzle(1) : null;
@@ -1812,7 +1857,36 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       if (auto) botTimer = setTimeout(() => { if (puzzle === mine) puzzleMove(game.legal().find(puzzleOk), true, true); }, 700);
     }, 600);
   }
+  const dayKey = d => { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  function dailyPuzzle() { const d = new Date(), n = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5), l = PUZZLES.filter(q => q.r >= 700 && q.r < 1750); return l[(n * 37) % l.length]; }
+  function startDaily() { endRush(true); goTo('puzzle'); if (mode !== 'puzzle') return; loadPuzzle(levelOf(dailyPuzzle()), dailyPuzzle()); puzzle.daily = dayKey(); puzzle.msg = pz.day === dayKey() ? 'You have already solved today\u2019s puzzle. A new one comes tomorrow.' : 'Today\u2019s puzzle. Everyone gets the same one.'; render(); }
+  function dailyDone(k, clean) { if (pz.day === k) return; const y = new Date(); y.setDate(y.getDate() - 1); pz.dayStreak = pz.day === dayKey(y) ? (pz.dayStreak || 0) + 1 : 1; pz.day = k; savePz(); toast('Daily puzzle solved. Streak: ' + plural(pz.dayStreak, 'day') + '.'); }
+  function startRush() {
+    endRush(true); goTo('puzzle'); if (mode !== 'puzzle') return;
+    const q = PUZZLES.map(p => ({ p, k: p.r + Math.random() * 250 })).sort((a, b) => a.k - b.k).map(x => x.p);
+    rush = { q, i: -1, score: 0, miss: 0, end: performance.now() + 180000 };
+    rush.t = setInterval(() => { if (rush && performance.now() >= rush.end) endRush(); else renderRush(); }, 200);
+    sfx.start(); nextRush();
+  }
+  function nextRush() { rush.i++; if (rush.i >= rush.q.length) return endRush(); const lv = pz.level; loadPuzzle(levelOf(rush.q[rush.i]), rush.q[rush.i]); pz.level = lv; savePz(); }
+  function endRush(quiet) {
+    if (!rush) return;
+    clearInterval(rush.t); const sc = rush.score, best = sc > (pz.rush || 0); rush = null; thinking = false; clearTimeout(botTimer);
+    if (best) { pz.rush = sc; savePz(); }
+    if (quiet) return;
+    if (mode === 'puzzle') { loadPuzzle(pz.level); puzzle.msg = 'Rush over! You solved ' + sc + '.' + (best && sc ? ' New best!' : ' Your best is ' + (pz.rush || 0) + '.'); puzzle.tone = 'good'; (best && sc ? sfx.win : sfx.draw)(); render(); }
+  }
+  function renderRush() {
+    const on = !!rush; $('rushBox').hidden = !on;
+    ['pzHead', 'puzzleThemes', 'pzHint', 'pzShow', 'puzzleProg'].forEach(id => { $(id).hidden = on; });
+    $('dailyBtn').hidden = on; $('rushBtn').textContent = on ? 'Stop rush' : 'Puzzle Rush'; $('pzNext').hidden = on;
+    if (!on) return;
+    const sec = Math.max(0, Math.ceil((rush.end - performance.now()) / 1000));
+    $('rushTime').textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); $('rushScore').textContent = rush.score; $('rushX').textContent = '\u2715'.repeat(rush.miss) + '\u25cb'.repeat(3 - rush.miss);
+  }
+  $('dailyBtn').onclick = $('hDaily').onclick = startDaily; $('hRush').onclick = startRush; $('rushBtn').onclick = () => (rush ? endRush() : startRush());
   function renderPuzzleCard() {
+    renderRush();
     const box = $('puzzleThemes');
     if (!box.children.length) LEVELS.forEach(l => {
       const b = document.createElement('button'), n = document.createElement('b'), c = document.createElement('small'), dot = document.createElement('span');
@@ -1878,7 +1952,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     root.style.setProperty('--slide', prefs.anim === 'off' ? '0s' : prefs.anim === 'slow' ? '.32s' : '.16s');
     board.classList.toggle('nocoords', prefs.coords === false);
   }
-  const CHECKS = [['setCoords', 'coords'], ['setDots', 'dots'], ['setHi', 'hiLast'], ['setQueen', 'autoQueen'], ['setConfirm', 'confirmResign'], ['setPre', 'premove'], ['setSound', 'sound']];
+  const CHECKS = [['setCoords', 'coords'], ['setDots', 'dots'], ['setHi', 'hiLast'], ['setQueen', 'autoQueen'], ['setConfirm', 'confirmResign'], ['setPre', 'premove'], ['setChat', 'chat'], ['setSound', 'sound']];
   const SEGS = [['setTheme', 'uiTheme'], ['setAnim', 'anim']];
   function paintSettings() {
     CHECKS.forEach(([id, k]) => { $(id).checked = prefs[k] !== false; });
@@ -2770,6 +2844,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   }
   function leaveRoom(room) {
     if (room.closed) return;
+    const st0 = room.data.status;
     if (room.data.status === 'active') {
       const o = myColor === 'w' ? 'b' : 'w';
       room.data.status = 'done';
@@ -2780,6 +2855,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       if (frame) room.nostr.forEach(c => { if (c.up) { try { c.ws.send(frame); } catch (e) {} } });
       try { if (navigator.sendBeacon) navigator.sendBeacon(RELAY + room.topic, body); else fetch(RELAY + room.topic, { method: 'POST', body, keepalive: true }); } catch (e) {}
     }
+    if (st0 === 'done' && room.opp && !room.oppLeft) rtcSend(room, { t: 'bye' });
     room.closed = true;
     try { if (room.ws) room.ws.close(); } catch (e) {}
     room.nostr.forEach(c => { try { c.ws.close(); } catch (e) {} });
@@ -2788,6 +2864,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   window.addEventListener('pagehide', () => { if (og && og.p2p) leaveRoom(og); });
   window.ccRoomStatus = () => (og && og.p2p ? { link: og.dc ? og.dc.readyState : 'relay', peer: og.pc ? og.pc.connectionState : 'none', ice: og.pc ? og.pc.iceConnectionState : 'none' } : null);
   function oppGone(room, sure) {
+    if (og === room && room.data.status === 'done') { room.oppLeft = true; return render(); }
     if (og !== room || room.data.status !== 'active') return;
     const win = () => {
       if (og !== room || room.data.status !== 'active') return;
@@ -2822,7 +2899,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     const code = $('roomCode').value.replace(/[^a-z]/gi, '').toUpperCase();
     if (code.length !== 5) return roomErr('Type the five-letter room code first.');
     const mine = startRoom(code, false); mine.connecting = true; render();
-    const hello = () => { if (og === mine && mine.data.status === 'open') relayPost(mine, { t: 'hello', elo: profile.elo, rd: profile.rd, name: myRoomName() }).catch(() => {}); };
+    const hello = () => { if (og === mine && mine.data.status === 'open') relayPost(mine, { t: 'hello', av: myAv(), elo: profile.elo, rd: profile.rd, name: myRoomName() }).catch(() => {}); };
     mine.onReady = () => { [1500, 4500, 8000].forEach(ms => setTimeout(hello, ms)); };
     relayListen(mine);
     setTimeout(() => {
@@ -2830,9 +2907,28 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       roomFail(mine, linkUp(mine) ? 'No room with code ' + code + ' answered. Check the code, and that your classmate still has the room open.' : 'Could not reach the room services. This network may block them.');
     }, 15000);
   }
+  const QC = ['Good luck!', 'Hi!', 'Nice move!', 'Oops', 'Thinking\u2026', 'Good game!', 'Thanks!', 'Rematch?'];
+  const sayT = {}; let lastSay = 0;
+  function showSay(color, t) { says[color] = t; clearTimeout(sayT[color]); sayT[color] = setTimeout(() => { says[color] = ''; renderStrips(); }, 4000); renderStrips(); tone(0, 660, .1, .06); }
+  QC.forEach((t, i) => { const b = document.createElement('button'); b.textContent = t; b.onclick = () => { if (!og || !og.p2p || Date.now() - lastSay < 1500) return; lastSay = Date.now(); rtcSend(og, { t: 'say', i }); showSay(myColor, t); }; $('qc').append(b); });
+  function renderOnlineBits() {
+    const r = mode === 'online' && og && og.p2p && og.opp && !review, st = r && og.data.status;
+    $('qc').hidden = !(r && prefs.chat !== false && !og.oppLeft && (st === 'active' || st === 'done'));
+    const b = $('rematchBtn'); b.hidden = !(r && st === 'done' && finished);
+    if (!b.hidden) { b.disabled = og.oppLeft || !!og.wantMe; b.textContent = og.oppLeft ? 'Opponent left' : og.wantMe ? 'Waiting for them\u2026' : og.wantOpp ? 'Accept rematch' : 'Rematch'; }
+  }
+  function rematch(room) {
+    const d = room.data, o = room.wantOpp, opp = myColor;
+    room.wantMe = room.wantOpp = null;
+    newGame();
+    myColor = opp === 'w' ? 'b' : 'w'; flipped = myColor === 'b';
+    d[myColor] = 'me'; d[opp] = 'opp'; d[opp + 'Elo'] = o.elo; d[opp + 'Rd'] = o.rd; d[myColor + 'Elo'] = profile.elo; d.moves = []; d.status = 'active'; room.startMsg = null;
+    startClock(room.tc || 'none'); sfx.start(); render();
+  }
+  $('rematchBtn').onclick = () => { if (!og || !og.p2p || og.oppLeft || og.wantMe) return; og.wantMe = true; $('bannerOv').hidden = true; rtcSend(og, { t: 'rematch', elo: profile.elo, rd: profile.rd }); if (og.wantOpp) rematch(og); else render(); };
   function setOpp(color, msg) {
     og.data[color] = 'opp'; og.data[color + 'Elo'] = num(msg.elo, 100, 4000, 300); og.data[color + 'Rd'] = num(msg.rd, 50, 350, 200);
-    names.opp = String(msg.name || 'Classmate').slice(0, 16);
+    names.opp = String(msg.name || 'Classmate').slice(0, 16); oppAv = cleanAv(msg.av);
   }
   function roomMsg(msg, room) {
     const d = room.data;
@@ -2841,15 +2937,15 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     } else if (msg.t === 'hello' && room.host && d.status === 'open' && !room.opp) {
       room.opp = msg.from;
       setOpp(room.hostColor === 'w' ? 'b' : 'w', msg);
-      d[room.hostColor + 'Elo'] = profile.elo; d.status = 'active'; startClock(prefs.clock);
-      relayPost(room, room.startMsg = { t: 'start', to: msg.from, tc: prefs.clock || 'none', hostColor: room.hostColor, elo: profile.elo, rd: profile.rd, name: myRoomName() })
+      d[room.hostColor + 'Elo'] = profile.elo; d.status = 'active'; room.tc = prefs.clock; startClock(room.tc);
+      relayPost(room, room.startMsg = { t: 'start', av: myAv(), to: msg.from, tc: prefs.clock || 'none', hostColor: room.hostColor, elo: profile.elo, rd: profile.rd, name: myRoomName() })
         .then(() => hostOffer(room)).catch(() => toast('Could not start the game. Check your connection.'));
       sfx.start(); render();
     } else if (msg.t === 'start' && !room.host && msg.to === room.me && d.status === 'open' && (msg.hostColor === 'w' || msg.hostColor === 'b')) {
       room.opp = msg.from; room.connecting = false;
       setOpp(msg.hostColor, msg);
       myColor = msg.hostColor === 'w' ? 'b' : 'w'; flipped = myColor === 'b';
-      d[myColor] = 'me'; d[myColor + 'Elo'] = profile.elo; d.status = 'active'; startClock(validTc(msg.tc) ? msg.tc : 'none');
+      d[myColor] = 'me'; d[myColor + 'Elo'] = profile.elo; d.status = 'active'; room.tc = validTc(msg.tc) ? msg.tc : 'none'; startClock(room.tc);
       sfx.start(); render();
     } else if (msg.t === 'offer' && !room.host && msg.to === room.me && typeof msg.sdp === 'string' && !room.pc) joinAnswer(room, msg.sdp);
     else if (msg.t === 'answer' && room.host && msg.to === room.me && typeof msg.sdp === 'string' && room.pc && !room.pc.currentRemoteDescription) {
@@ -2862,7 +2958,9 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       const st = game.status();
       if (st.over) roomFinish(st.result, st.reason);
     } else if (msg.t === 'resign' && d.status === 'active') roomFinish(myColor === 'w' ? '1-0' : '0-1', 'resignation');
-    else if (msg.t === 'bye') oppGone(room, true);
+    else if (msg.t === 'bye') { room.oppLeft = true; if (d.status === 'active') oppGone(room, true); else render(); }
+    else if (msg.t === 'say' && prefs.chat !== false && QC[msg.i]) showSay(myColor === 'w' ? 'b' : 'w', QC[msg.i]);
+    else if (msg.t === 'rematch' && d.status === 'done') { room.wantOpp = { elo: num(msg.elo, 100, 4000, 300), rd: num(msg.rd, 50, 350, 200) }; if (room.wantMe) rematch(room); else { toast(names.opp + ' wants a rematch.'); render(); } }
     else if (msg.t === 'flag' && d.status === 'active') roomFinish(myColor === 'w' ? '1-0' : '0-1', 'timeout');
     else if (msg.t === 'ping' && typeof msg.id === 'string') relayPost(room, { t: 'pong', id: msg.id.slice(0, 20) }).catch(() => {});
     else if (msg.t === 'pong' && msg.id === room.pingId) room.pingId = null;
@@ -3054,7 +3152,9 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   function curTheme() { const t = BOARD_THEMES.find(x => x.id === prefs.boardTheme); return t && themeOk(t) ? t : BOARD_THEMES[0]; }
   function applyTheme() {
     const cu = BOARD_THEMES.find(x => x.id === 'custom'); if (Array.isArray(prefs.custom)) { cu.light = prefs.custom[0]; cu.dark = prefs.custom[1]; }
-    document.body.className = admin && prefs.pieceStyle ? 'ps-' + prefs.pieceStyle : '';
+    const ps = (admin && prefs.pieceStyle) || prefs.pieceSet; document.body.className = ps ? 'ps-' + ps : '';
+    const ac = ACCENTS[prefs.accent] || ACCENTS[0];
+    ['--accent', '--accent-ink'].forEach((k, i) => { if (ac[1]) document.documentElement.style.setProperty(k, i ? '#fff' : ac[1]); else document.documentElement.style.removeProperty(k); });
     const t = curTheme(), st = document.documentElement.style;
     if (!t.base) { st.setProperty('--sq-light', t.light); st.setProperty('--sq-dark', t.dark); }
     else { st.removeProperty('--sq-light'); st.removeProperty('--sq-dark'); }
@@ -3369,7 +3469,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     try { navigator.clipboard.writeText(txt).then(() => toast('Game copied.'), manual); } catch (e) { manual(); }
   };
   $('adWipe').onclick = () => armed($('adWipe'), 'Reset everything on this device', () => {
-    ['cc-profile', 'cc-prefs', 'cc-puzzles', 'cc-puzzles2', 'cc-applied', 'cc-admin', 'cc-save', 'cc-hist'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+    ['cc-profile', 'cc-prefs', 'cc-puzzles', 'cc-puzzles2', 'cc-applied', 'cc-admin', 'cc-save', 'cc-hist', 'cc-onboard', 'cc-learn'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
     location.reload();
   });
   $('drawBtn').onclick = () => {
@@ -3433,6 +3533,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     COACHES.forEach(c => it.push([c.name, 'Choose as your coach', () => { prefs.coach = c.id; store.set('cc-prefs', prefs); renderHome(); render(); toast(c.name + ' is your coach.'); }]));
     BOARD_THEMES.filter(themeOk).forEach(t => it.push([t.name + ' board', 'Board colours', () => { prefs.boardTheme = t.id; store.set('cc-prefs', prefs); applyTheme(); paintThemes(); }]));
     ['Look', 'Playing', 'Sound', 'You', 'Help'].forEach((n, i) => it.push(['Settings: ' + n, 'Settings', () => window.ccSettings(i)]));
+    it.push(['Daily puzzle', 'Puzzles', startDaily], ['Puzzle Rush', 'Puzzles', startRush], ['Learn chess', 'Tutorial', startLearn], ['Customise your player', 'Settings', $('custBtn').onclick]);
     it.push(['Change your name', 'Settings', askName]);
     store.get('cc-hist', []).slice(0, 8).forEach(g => it.push(['Review ' + g.w + ' vs ' + g.b, Math.ceil(g.m.length / 2) + ' moves', () => openHist(g)]));
     if (admin || helper) it.push([admin ? 'Control room' : 'Helper', 'Admin', openAdmin]);
@@ -3463,7 +3564,97 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
 
   applyTheme(); paintName(); paintAdmin();
   applySettings(); paintSound(); paintColorSeg(); newGame(); restoreGame(); connect();
-  if (!prefs.name) askName();
+  function optRow(title, list, cur, paint, pick) {
+    const w = document.createElement('div'), h = document.createElement('h4'), r = document.createElement('div'); h.textContent = title; r.className = 'opts';
+    list.forEach(v => { const b = document.createElement('button'); b.type = 'button'; paint(b, v); b.setAttribute('aria-pressed', v[0] === cur()); b.onclick = () => { pick(v[0]); store.set('cc-prefs', prefs); applyTheme(); paintThemes(); r.querySelectorAll('button').forEach((x, i) => x.setAttribute('aria-pressed', list[i][0] === cur())); if (w.after2) w.after2(); render(); }; r.append(b); });
+    w.append(h, r); return w;
+  }
+  const PN = { k: 'King', q: 'Queen', r: 'Rook', b: 'Bishop', n: 'Knight', p: 'Pawn' };
+  function buildMe(box) {
+    const top = document.createElement('div'), pa = document.createElement('div'), nm = document.createElement('b'); top.className = 'lookrow'; pa.className = 'pav'; top.append(pa, nm);
+    const up = () => { const a = myAv(); pa.textContent = glyph(a.g); pa.style.background = AVC[a.c]; nm.textContent = prefs.name || 'You'; }; up();
+    const rows = [optRow('Your icon', Object.keys(PN).map(k => [k]), () => prefs.av, (b, v) => { b.textContent = glyph(v[0]); b.className = 'gl'; b.setAttribute('aria-label', PN[v[0]]); }, v => { prefs.av = v; }),
+      optRow('Icon colour', AVC.map((c, i) => [i]), () => prefs.avc, (b, v) => { b.className = 'sw1'; b.style.background = AVC[v[0]]; b.setAttribute('aria-label', 'Icon colour ' + (v[0] + 1)); }, v => { prefs.avc = v; }),
+      optRow('Site colour', ACCENTS.map((a, i) => [i]), () => prefs.accent, (b, v) => { b.textContent = ACCENTS[v[0]][0]; b.style.borderLeft = '14px solid ' + (ACCENTS[v[0]][1] || '#1b7279'); }, v => { prefs.accent = v; })];
+    rows.forEach(r => { r.after2 = up; }); box.append(top, ...rows);
+  }
+  function buildBoard(box) {
+    const pv = document.createElement('div'), g = document.createElement('div'); pv.className = 'pvw'; g.className = 'squares';
+    for (let i = 0; i < 16; i++) { const d = document.createElement('div'); d.className = 'sq' + (((i >> 2) + (i & 3)) % 2 ? ' dark' : ''); g.append(d); }
+    pv.append(g); ['r', 'n', 'q', 'k', 'p', 'p', '', 'p', '', 'P', 'P', '', 'Q', 'K', 'B', 'R'].forEach((q, i) => { if (!q) return; const e = document.createElement('div'); e.className = 'piece ' + E.colorOf(q); e.textContent = glyph(q); e.style.transform = 'translate(' + (i & 3) * 100 + '%,' + (i >> 2) * 100 + '%)'; pv.append(e); });
+    const right = document.createElement('div'), row = document.createElement('div'); right.className = 'cust'; right.style.flex = '1 1 220px'; row.className = 'lookrow';
+    right.append(optRow('Board', BOARD_THEMES.filter(themeOk).map(t => [t.id, t]), () => curTheme().id, (b, v) => { b.style.cssText = 'min-width:44px;padding:0;background:linear-gradient(135deg,' + v[1].light + ' 50%,' + v[1].dark + ' 50%)'; b.setAttribute('aria-label', v[1].name + ' board'); b.title = v[1].name; }, v => { prefs.boardTheme = v; }),
+      optRow('Pieces', SETS, () => prefs.pieceSet || '', (b, v) => { b.textContent = v[1]; }, v => { prefs.pieceSet = v; }),
+      optRow('Page', [['system', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']], () => prefs.uiTheme, (b, v) => { b.textContent = v[1]; }, v => { prefs.uiTheme = v; applySettings(); }));
+    row.append(pv, right); box.append(row);
+  }
+  $('custBtn').onclick = $('setCust').onclick = () => { $('setModal').hidden = true; $('custBody').textContent = ''; buildMe($('custBody')); buildBoard($('custBody')); $('custModal').hidden = false; };
+  $('custDone').onclick = () => { $('custModal').hidden = true; renderHome(); };
+  $('custModal').onclick = e => { if (e.target === $('custModal')) $('custDone').onclick(); };
+  /* one-time welcome */
+  let iStep = 0, skill = -1;
+  const SKILLS = [['New to chess', 'Teach me the moves', 0, 0], ['I know the rules', 'I play sometimes', 3, 0], ['Pretty good', 'I know some tactics', 7, 1], ['Very good', 'Bring it on', 11, 2]];
+  function picks(box, list, cur, pick) { const g = document.createElement('div'); g.className = 'picks'; list.forEach((x, i) => { const b = document.createElement('button'), t = document.createElement('b'), d = document.createElement('small'); b.type = 'button'; b.className = 'pick'; t.textContent = x[0]; d.textContent = x[1]; b.append(t, d); b.setAttribute('aria-pressed', cur() === i); b.onclick = () => { pick(i); g.querySelectorAll('button').forEach((q, k) => q.setAttribute('aria-pressed', cur() === k)); }; g.append(b); }); box.append(g); }
+  function introStep() {
+    const b = $('ibody'); b.textContent = '';
+    $('idots').textContent = ''; for (let i = 0; i < 5; i++) { const d = document.createElement('i'); if (i <= iStep) d.className = 'on'; $('idots').append(d); }
+    const h = document.createElement('h2'), q = document.createElement('p'); q.className = 'note'; b.append(h, q);
+    $('iBack').style.visibility = iStep ? '' : 'hidden'; $('iNext').hidden = false; $('iNext').textContent = 'Next';
+    if (iStep === 0) { h.textContent = 'Welcome to Classroom Chess'; q.textContent = 'Let’s set up your player. First, what should people call you?'; const n = document.createElement('input'); n.className = 'inp'; n.id = 'iName'; n.maxLength = 16; n.placeholder = 'Your name or nickname'; n.setAttribute('aria-label', 'Your name'); n.autocomplete = 'off'; n.value = prefs.name || ''; n.onkeydown = e => { if (e.key === 'Enter') $('iNext').onclick(); }; b.append(n); setTimeout(() => n.focus(), 30); }
+    else if (iStep === 1) { h.textContent = 'Make your player'; q.textContent = 'Your icon shows next to your name in games.'; buildMe(b); }
+    else if (iStep === 2) { h.textContent = 'Design your board'; q.textContent = 'You can change all of this later.'; buildBoard(b); }
+    else if (iStep === 3) { h.textContent = 'How good are you?'; q.textContent = 'This picks your first opponent.'; picks(b, SKILLS, () => skill, i => { skill = i; prefs.bot = SKILLS[i][2]; prefs.coachLvl = SKILLS[i][3]; store.set('cc-prefs', prefs); }); const c = document.createElement('h4'); c.textContent = 'Choose your coach'; b.append(c); picks(b, COACHES.map(x => [x.name, x.tag]), () => COACHES.indexOf(coach()), i => { prefs.coach = COACHES[i].id; store.set('cc-prefs', prefs); }); }
+    else { h.textContent = 'You’re all set, ' + prefs.name + '!'; q.textContent = skill === 0 ? 'Start with the tutorial: you’ll learn every piece by moving it.' : 'What do you want to do first?'; $('iNext').hidden = true;
+      picks(b, [['Take the tutorial', 'Learn by playing, about 5 minutes'], ['Play your first game', 'Against ' + BOTS[prefs.bot].name], ['Try the daily puzzle', 'Same for everyone today'], ['Look around', 'Go to the home page']], () => (skill === 0 ? 0 : -1), i => { store.set('cc-onboard', 1); $('introModal').hidden = true; paintName(); renderHome(); [startLearn, () => { goTo('bot'); if (mode === 'bot' && !inProgress()) newGame(); }, startDaily, () => goTo('home')][i](); }); }
+  }
+  $('iBack').onclick = () => { iStep = Math.max(0, iStep - 1); introStep(); };
+  $('iNext').onclick = () => {
+    if (iStep === 0) { const n = $('iName').value.replace(/\s+/g, ' ').trim().slice(0, 16); if (!n) { toast('Type a name first.'); return $('iName').focus(); } prefs.name = n; store.set('cc-prefs', prefs); paintName(); }
+    if (iStep === 3 && skill < 0) return toast('Pick how good you are.');
+    iStep++; audio(); sfx.move(); introStep();
+  };
+  /* hands-on tutorial: each step is a position and the squares that count as right */
+  const LESSONS = [
+    ['The pawn', 'Pawns walk straight ahead. From the start they can go two squares. Move your pawn two squares.', '4k3/8/8/8/8/8/4P3/4K3 w - - 0 1', ['e2e4']],
+    ['Pawns capture sideways', 'Pawns take one square diagonally forward. Take the knight.', '4k3/8/8/3n4/4P3/8/8/4K3 w - - 0 1', ['e4d5']],
+    ['The rook', 'Rooks go any distance in straight lines. Take the bishop.', '4k3/8/8/8/R5b1/8/8/4K3 w - - 0 1', ['a4g4']],
+    ['The bishop', 'Bishops go any distance diagonally. Take the rook.', '4k3/6r1/8/8/8/2B5/8/4K3 w - - 0 1', ['c3g7']],
+    ['The queen', 'The queen moves like a rook and a bishop together. Take the knight.', '4k3/8/7n/8/8/8/8/2Q1K3 w - - 0 1', ['c1h6']],
+    ['The knight', 'Knights jump in an L: two squares, then one to the side. They can hop over pieces. Take the queen.', '4k3/8/3q4/8/4N3/8/8/4K3 w - - 0 1', ['e4d6']],
+    ['The king', 'The king moves one square any way, and must never step into danger. Take the pawn.', '4k3/8/8/8/8/8/3p4/4K3 w - - 0 1', ['e1d2']],
+    ['Check', 'Attacking the king is called check. Give check with your rook.', '4k3/8/8/8/8/8/8/R3K3 w - - 0 1', ['a1a8']],
+    ['Getting out of check', 'You are in check from the rook. Block it with your bishop.', '3kr3/8/8/8/8/3B4/3P1P2/3QK3 w - - 0 1', ['d3e4', 'd3e2', 'd1e2']],
+    ['Castling', 'King and rook can move together to keep the king safe. Move your king two squares right.', '4k3/8/8/8/8/8/5PPP/4K2R w K - 0 1', ['e1g1']],
+    ['Promotion', 'A pawn that reaches the far end becomes a queen. Push it!', '8/P3k3/8/8/8/8/8/4K3 w - - 0 1', ['a7a8q']],
+    ['Checkmate', 'Checkmate wins: the king is attacked and cannot escape. Find it with your rook.', '6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1', ['d1d8']],
+    ['A fork', 'One piece attacking two things at once is a fork. Use your knight to check the king and attack the queen.', 'q3k3/8/8/3N4/8/8/8/4K3 w - - 0 1', ['d5c7']]
+  ];
+  let lAt = 0, lSel = -1, lOk = false, lState = null;
+  function startLearn() { lAt = 0; $('learnModal').hidden = false; lesson(); }
+  function lesson() { const L = LESSONS[lAt]; lState = E.fromFen(L[2]); lSel = -1; lOk = false; $('lHead').textContent = (lAt + 1) + ' of ' + LESSONS.length + ': ' + L[0]; $('lText').textContent = L[1]; $('lNext').disabled = true; $('lNext').textContent = lAt === LESSONS.length - 1 ? 'Finish' : 'Next'; lDraw(); }
+  function lDraw() {
+    const box = $('lBoard'), moves = lSel < 0 ? [] : E.legal(lState).filter(m => m.from === lSel), g = document.createElement('div'); box.textContent = ''; g.className = 'squares';
+    for (let i = 0; i < 64; i++) { const d = document.createElement('div'), t = moves.find(m => m.to === i); d.className = 'sq' + (((i >> 3) + (i & 7)) % 2 ? ' dark' : '') + (i === lSel ? ' sel' : '') + (t ? (t.captured ? ' ring' : ' dot') : ''); g.append(d); }
+    box.append(g); lState.b.forEach((q, i) => { if (!q) return; const e = document.createElement('div'); e.className = 'piece ' + E.colorOf(q); e.textContent = glyph(q); e.style.transform = 'translate(' + (i & 7) * 100 + '%,' + (i >> 3) * 100 + '%)'; box.append(e); });
+    $('lBar').style.width = (lAt + (lOk ? 1 : 0)) / LESSONS.length * 100 + '%';
+  }
+  $('lBoard').onclick = e => {
+    if (lOk) return; audio();
+    const r = $('lBoard').getBoundingClientRect(), sq = Math.floor((e.clientY - r.top) / r.height * 8) * 8 + Math.floor((e.clientX - r.left) / r.width * 8);
+    if (lSel >= 0) {
+      const ms = E.legal(lState).filter(m => m.from === lSel && m.to === sq), m = ms.find(x => x.promo === 'q') || ms[0];
+      if (m) {
+        if (LESSONS[lAt][3].includes(E.uci(m))) { lState = m.next; lOk = true; lSel = -1; (m.captured ? sfx.capture : sfx.move)(); tone(.1, 784, .2, .09); $('lText').textContent = ['Nice!', 'Exactly right.', 'You got it!', 'Great job!'][lAt % 4]; $('lNext').disabled = false; $('lNext').focus(); }
+        else { sfx.wrong(); lSel = -1; $('lText').textContent = 'Not that one. ' + LESSONS[lAt][1]; }
+        return lDraw();
+      }
+    }
+    lSel = lState.b[sq] && E.colorOf(lState.b[sq]) === 'w' ? sq : -1; lDraw();
+  };
+  $('lNext').onclick = () => { if (!lOk) return; if (++lAt < LESSONS.length) return lesson(); store.set('cc-learn', 1); $('learnModal').hidden = true; sfx.win(); confetti(); if (skill === 0 || prefs.bot === 0) { goTo('bot'); if (mode === 'bot' && !inProgress()) newGame(); toast('Tutorial finished! Try a game against ' + foe().name + '.'); } else { renderHome(); toast('Tutorial finished!'); } };
+  $('lQuit').onclick = () => { $('learnModal').hidden = true; renderHome(); };
+  $('hLearn').onclick = startLearn;
+  if (!store.get('cc-onboard', 0)) { $('introModal').hidden = false; introStep(); }
   checkHash();
 })();
 </script>
