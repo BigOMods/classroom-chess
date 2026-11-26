@@ -268,6 +268,16 @@ select.inp { flex: 0 1 auto }
   .moves { max-height: 240px }
 }
 .strip { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px 10px; min-height: 38px }
+/* levels and trophies */
+.lvl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap } .lvl i { flex: 1 1 60px; height: 7px; border-radius: 9px; background: var(--line); overflow: hidden; min-width: 50px } .lvl u { display: block; height: 100%; background: linear-gradient(90deg, #f6c43e, #e0782e); transition: width .4s }
+.trophies { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px }
+.tro { display: flex; gap: 10px; align-items: center; padding: 9px 10px; border-radius: 12px; background: var(--surface-2); min-width: 0 } .tro .ic { flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font: 22px/1 "Segoe UI Symbol", "Apple Symbols", sans-serif; background: linear-gradient(135deg, #f8d66b, #d98a1e); color: #3b2200 }
+.tro b { display: block; font-size: 13.5px } .tro small { color: var(--muted); font-size: 12px; line-height: 1.25; display: block } .tro.off { opacity: .45 } .tro.off .ic { background: var(--line); color: var(--muted) }
+.achpop { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 70; display: flex; gap: 12px; align-items: center; padding: 10px 18px 10px 10px; border-radius: 16px; background: #1d2326; color: #fff; box-shadow: 0 12px 30px rgba(0,0,0,.35); animation: achin .45s cubic-bezier(.2,1.4,.4,1); max-width: calc(100% - 32px) }
+.achpop .ic { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font: 26px/1 "Segoe UI Symbol", "Apple Symbols", sans-serif; background: linear-gradient(135deg, #f8d66b, #d98a1e); color: #3b2200 } .achpop small { display: block; color: #f6c43e; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 11px }
+@keyframes achin { from { transform: translate(-50%, -30px); opacity: 0 } } @media (prefers-reduced-motion: reduce) { .achpop { animation: none } }
+.bannerx { display: flex; flex-direction: column; gap: 6px; align-items: center } .bannerx .xp { font: 700 15px var(--display); color: #e0912e } .bannerx .lv { width: 220px; max-width: 100% } .bannerx .got { font-size: 13.5px; color: var(--muted) }
+.banner .big { font: 46px/1 "Segoe UI Symbol", "Apple Symbols", sans-serif; animation: pop .35s }
 /* make it yours */
 .pav { flex: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: #fff; font: 19px/1 "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols2", sans-serif }
 .cust { display: flex; flex-direction: column; gap: 14px } .cust h4 { margin: 0 0 6px; font: 700 14px var(--display) }
@@ -369,6 +379,7 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
     </nav>
     <div class="spacer"></div>
     <div class="chip" title="Your rating"><small>Your rating</small><b id="myElo">300</b><small id="myRec">0W 0L 0D</small></div>
+    <div class="chip lvl" title="Your level"><small>Level</small><b id="lvlN">1</b><i><u id="lvlBar"></u></i></div>
     <button class="icon-btn" id="findBtn" title="Ctrl or Cmd + K">Find anything</button>
     <button class="icon-btn namebtn" id="nameBtn" aria-label="Change your name"></button>
     <button class="icon-btn" id="adminBtn" hidden>Admin</button>
@@ -402,6 +413,7 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
       <div class="stat"><small>Puzzles solved</small><b id="hsPz">0</b></div>
       <div class="stat"><small>Puzzle rating</small><b id="hsStreak">400</b></div>
     </div>
+    <div class="card"><div class="row" style="justify-content:space-between"><h3>Trophies</h3><span class="note" id="troCount"></span></div><div class="lvl"><b id="hLvl">Level 1</b><i><u id="hLvlBar"></u></i><small class="note" id="hXp"></small></div><div class="trophies" id="troList"></div></div>
     <div class="card" id="homeHist" hidden><h3>Recent games</h3><div class="hist" id="histList"></div></div>
     <div class="card" id="homeLadder" hidden><h3>Class ladder</h3><div class="list" id="homeLadderList"></div></div>
     <h3 class="sec">Make it yours</h3>
@@ -444,7 +456,7 @@ body.ps-ghost .piece { opacity: .55 } body.ps-ruby .piece.w { color: #ffd9de; -w
         <div class="overlay" id="promoOv" hidden><div class="promo" id="promo"></div></div>
         <div class="overlay" id="bannerOv" hidden>
           <div class="banner">
-            <h2 id="bannerTitle"></h2><p id="bannerSub"></p><div class="delta" id="bannerDelta"></div>
+            <div class="big" id="bannerIc" aria-hidden="true"></div><h2 id="bannerTitle"></h2><p id="bannerSub"></p><div class="delta" id="bannerDelta"></div><div class="bannerx" id="bannerX"></div>
             <div class="row"><button class="btn primary" id="bannerReview">Review game</button><button class="btn" id="bannerAgain">Play again</button><button class="btn" id="bannerClose">See the board</button></div>
           </div>
         </div>
@@ -1420,7 +1432,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     $('lobbyCard').hidden = mode !== 'online' || !!review;
     $('ladderCard').hidden = !!review || !(db && (mode === 'online' || ladderRows.length));
     document.querySelectorAll('#bots .bot').forEach((b, i) => { b.setAttribute('aria-pressed', i === prefs.bot); b.disabled = mode === 'bot' && inProgress(); });
-    $('myElo').textContent = profile.elo;
+    $('myElo').textContent = profile.elo; paintLevel();
     $('myRec').textContent = profile.w + 'W ' + profile.l + 'L ' + profile.d + 'D';
   }
   function render(anim) { renderSquares(); renderPieces(anim); renderStrips(); renderMoves(); renderStatus(); renderReview(); saveGame(); autopilot(); paintCrumbs(); }
@@ -1483,6 +1495,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     const before = game.s, rec = game.play(m);
     lastMove = m; selected = -1; vsHintState = null;
     clockAfterMove();
+    if (mode === 'bot' && !coachGame) banter(before, m, rec);
     if (mode === 'bot' && coachGame) { if (before.turn === myColor) vsJudge(before, m, rec); else vsOwn(m, rec); }
     moveSound(rec);
     render(slide ? m : null);
@@ -1606,6 +1619,11 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     if (game.moves.length >= 2 && !histNames) {
       const h = store.get('cc-hist', []); h.unshift({ t: Date.now(), m: game.moves.map(x => x.uci), f: E.toFen(game.states[0]), w: sideInfo('w').name, b: sideInfo('b').name, r: result, why: reason, me: mode === 'local' ? '' : myColor, d: delta }); store.set('cc-hist', h.slice(0, 20));
     }
+    const sc0 = mode === 'local' ? null : winner === null ? .5 : winner === myColor ? 1 : 0, got = gameRewards(sc0, reason, result);
+    $('bannerIc').textContent = sc0 === 1 || (mode === 'local' && winner) ? '\u265B\uFE0E' : sc0 === 0 ? '\u265A\uFE0E' : '\u00BD';
+    const bx = $('bannerX'); bx.textContent = '';
+    if (got.xp) { const x = document.createElement('span'), lv = document.createElement('div'), bar = document.createElement('i'), u = document.createElement('u'); x.className = 'xp'; x.textContent = '+' + got.xp + ' XP' + (got.up ? '  \u2022  Level ' + got.up + '!' : ''); lv.className = 'lvl lv'; bar.append(u); lv.append(bar); u.style.width = lvl().pct + '%'; bx.append(x, lv); }
+    if (got.ach.length) { const g = document.createElement('span'); g.className = 'got'; g.textContent = 'Trophy unlocked: ' + got.ach.join(', '); bx.append(g); }
     $('bannerTitle').textContent = title;
     $('bannerSub').textContent = delta === null ? (mode === 'online' ? '' : 'Unrated game.') : 'Your rating is now ' + profile.elo + '.';
     const dEl = $('bannerDelta');
@@ -1621,7 +1639,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   let botLevel = prefs.bot;
   function newGame() {
     drawSentAt = drawIncoming = -1;
-    startClock('none'); histNames = null; peeks = 3; peek = null; vs = null; vsHintState = null; premove = null;
+    startClock('none'); histNames = null; peeks = 3; lastBanter = 0; says.w = says.b = ''; peek = null; vs = null; vsHintState = null; premove = null;
     if (mode === 'puzzle') return loadPuzzle(pz.level);
     puzzle = null;
     clearTimeout(botTimer); thinking = false; finished = false; endInfo = null; selected = -1; lastMove = null; review = null; reviewToken++;
@@ -1749,6 +1767,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     $('hsRec').textContent = profile.w + '-' + profile.l + '-' + profile.d;
     $('hsPz').textContent = solved + ' of ' + total;
     $('hsStreak').textContent = pz.rating;
+    renderTrophies();
     $('hDailyTag').textContent = pz.day === dayKey() ? 'Done, streak ' + (pz.dayStreak || 1) : 'New'; $('hRushTag').textContent = 'Best ' + (pz.rush || 0); $('hLearnTag').textContent = store.get('cc-learn', 0) ? 'Finished' : 'Start';
     $('hcPav').textContent = glyph(myAv().g); $('hcPav').style.background = AVC[myAv().c]; $('hcMe').textContent = prefs.name || 'Player';
     $('pzTag').textContent = solved + '/' + total;
@@ -1840,7 +1859,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       if (auto) { puzzle.msg = 'That was the answer. Have a go at the next one.'; puzzle.tone = ''; }
       else {
         const d = puzzle.clean ? ratePuzzle(1) : null;
-        pz.done[q.id] = 1; sfx.win();
+        pz.done[q.id] = 1; sfx.win(); puzzleRewards(puzzle);
         puzzle.msg = (puzzle.clean ? 'Solved on the first try!' : 'Solved.') + (d !== null ? ' Puzzle rating ' + signed(d) + '.' : ''); puzzle.tone = 'good';
       }
       savePz();
@@ -1860,7 +1879,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   const dayKey = d => { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   function dailyPuzzle() { const d = new Date(), n = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5), l = PUZZLES.filter(q => q.r >= 700 && q.r < 1750); return l[(n * 37) % l.length]; }
   function startDaily() { endRush(true); goTo('puzzle'); if (mode !== 'puzzle') return; loadPuzzle(levelOf(dailyPuzzle()), dailyPuzzle()); puzzle.daily = dayKey(); puzzle.msg = pz.day === dayKey() ? 'You have already solved today\u2019s puzzle. A new one comes tomorrow.' : 'Today\u2019s puzzle. Everyone gets the same one.'; render(); }
-  function dailyDone(k, clean) { if (pz.day === k) return; const y = new Date(); y.setDate(y.getDate() - 1); pz.dayStreak = pz.day === dayKey(y) ? (pz.dayStreak || 0) + 1 : 1; pz.day = k; savePz(); toast('Daily puzzle solved. Streak: ' + plural(pz.dayStreak, 'day') + '.'); }
+  function dailyDone(k, clean) { if (pz.day === k) return; const y = new Date(); y.setDate(y.getDate() - 1); pz.dayStreak = pz.day === dayKey(y) ? (pz.dayStreak || 0) + 1 : 1; pz.day = k; savePz(); addXp(25); if (pz.dayStreak >= 3) unlock('daily3'); toast('Daily puzzle solved. Streak: ' + plural(pz.dayStreak, 'day') + '.'); }
   function startRush() {
     endRush(true); goTo('puzzle'); if (mode !== 'puzzle') return;
     const q = PUZZLES.map(p => ({ p, k: p.r + Math.random() * 250 })).sort((a, b) => a.k - b.k).map(x => x.p);
@@ -1873,6 +1892,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     if (!rush) return;
     clearInterval(rush.t); const sc = rush.score, best = sc > (pz.rush || 0); rush = null; thinking = false; clearTimeout(botTimer);
     if (best) { pz.rush = sc; savePz(); }
+    if (sc) addXp(sc * 3); if (sc >= 10) unlock('rush10'); if (sc >= 20) unlock('rush20');
     if (quiet) return;
     if (mode === 'puzzle') { loadPuzzle(pz.level); puzzle.msg = 'Rush over! You solved ' + sc + '.' + (best && sc ? ' New best!' : ' Your best is ' + (pz.rush || 0) + '.'); puzzle.tone = 'good'; (best && sc ? sfx.win : sfx.draw)(); render(); }
   }
@@ -1885,6 +1905,85 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     $('rushTime').textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); $('rushScore').textContent = rush.score; $('rushX').textContent = '\u2715'.repeat(rush.miss) + '\u25cb'.repeat(3 - rush.miss);
   }
   $('dailyBtn').onclick = $('hDaily').onclick = startDaily; $('hRush').onclick = startRush; $('rushBtn').onclick = () => (rush ? endRush() : startRush());
+  /* ---------- levels and trophies ---------- */
+  const ACH = [
+    ['first', 'First move', 'Finish your first game', '♟'], ['win', 'Winner', 'Win a game against a bot or a classmate', '♛'], ['wins10', 'On a roll', 'Win 10 games', '★'],
+    ['gus', 'Gus who?', 'Beat Grandmaster Gus', '♚'], ['sf', 'Machine slayer', 'Beat Stockfish', '⚔'], ['online', 'Class champion', 'Win a game against a classmate', '♔'],
+    ['fast', 'Speed run', 'Win in 15 moves or fewer', '⚡'], ['timeout', 'Beat the clock', 'Win on time', '⏱'], ['peace', 'Peace talks', 'Agree a draw', '☮'],
+    ['pz10', 'Puzzler', 'Solve 10 puzzles', '♞'], ['pz50', 'Puzzle master', 'Solve 50 puzzles', '♜'], ['expert', 'Big brain', 'Solve an Expert puzzle first try', '✦'],
+    ['rush10', 'Rusher', 'Score 10 in Puzzle Rush', '➤'], ['rush20', 'Unstoppable', 'Score 20 in Puzzle Rush', '☄'], ['daily3', 'Daily habit', 'Solve the daily puzzle 3 days running', '☀'],
+    ['review', 'Look back', 'Review a game', '⌕'], ['brill', 'Brilliant!', 'Play a brilliant move', '‼'], ['tutor', 'Student', 'Finish the tutorial', '♝'],
+    ['style', 'Make it yours', 'Customise your player or board', '✨'], ['chat', 'Chatty', 'Send a quick chat message', '❝'], ['rematch', 'Run it back', 'Play a rematch', '↻']
+  ];
+  let prog = Object.assign({ xp: 0, ach: {}, wins: 0 }, store.get('cc-prog', {}));
+  const saveProg = () => store.set('cc-prog', prog);
+  function lvl(xp) { xp = xp == null ? prog.xp : xp; let n = 1, need = 100, left = xp; while (left >= need) { left -= need; n++; need = 100 + (n - 1) * 50; } return { n, left, need, pct: Math.round(left / need * 100) }; }
+  function paintLevel() { const L = lvl(); $('lvlN').textContent = L.n; $('lvlBar').style.width = L.pct + '%'; }
+  function addXp(n) { const a = lvl().n; prog.xp += Math.max(0, Math.round(n)); saveProg(); const b = lvl().n; paintLevel(); if (b > a) { achPop('⬆', 'Level up', 'You are now level ' + b); return b; } return 0; }
+  let achQ = Promise.resolve();
+  function achPop(ic, kicker, text) {
+    achQ = achQ.then(() => new Promise(res => {
+      const d = document.createElement('div'), i = document.createElement('div'), t = document.createElement('div'), sm = document.createElement('small'), b = document.createElement('b');
+      d.className = 'achpop'; d.setAttribute('role', 'status'); i.className = 'ic'; i.textContent = ic + '︎'; sm.textContent = kicker; b.textContent = text; t.append(sm, b); d.append(i, t); document.body.append(d);
+      [523, 784, 1047].forEach((f, k) => tone(k * .09, f, .22, .09)); setTimeout(() => { d.remove(); res(); }, 2800);
+    }));
+  }
+  function unlock(id) { if (prog.ach[id]) return false; const a = ACH.find(x => x[0] === id); if (!a) return false; prog.ach[id] = Date.now(); saveProg(); achPop(a[3], 'Trophy unlocked', a[1]); addXp(50); renderTrophies(); return a[1]; }
+  function gameRewards(sc, reason, result) {
+    const before = Object.keys(prog.ach).length, names = [], u = id => { const n = unlock(id); if (n) names.push(n); };
+    const a0 = lvl().n;
+    if (game.moves.length >= 2 && !histNames) u('first');
+    let xp = 0;
+    if (mode === 'local') xp = game.moves.length >= 10 ? 10 : 0;
+    else if (sc !== null && game.moves.length >= 2 && !(admin && /admin/.test(reason))) {
+      const lvlBonus = mode === 'online' ? 20 : foe().sf ? 60 : coachGame ? 10 : Math.round(botLevel * 2.5);
+      xp = sc === 1 ? 30 + lvlBonus : sc === .5 ? 15 + lvlBonus / 2 : 8;
+      if (sc === 1) {
+        prog.wins++; saveProg(); u('win'); if (prog.wins >= 10) u('wins10');
+        if (mode === 'online') u('online'); else if (foe().sf) u('sf'); else if (!coachGame && botLevel === BOTS.length - 1) u('gus');
+        if (game.moves.length <= 30) u('fast'); if (reason === 'timeout') u('timeout');
+      }
+      if (sc === .5 && reason === 'agreement') u('peace');
+    }
+    const up = addXp(xp) || (lvl().n > a0 ? lvl().n : 0);
+    return { xp: xp + (Object.keys(prog.ach).length - before) * 50, ach: names, up };
+  }
+  function puzzleRewards(pzl) {
+    if (rush) return;
+    addXp(pzl.clean ? 12 : 6);
+    const n = PUZZLES.filter(q => pz.done[q.id]).length;
+    if (n >= 10) unlock('pz10'); if (n >= 50) unlock('pz50'); if (pzl.clean && levelOf(pzl.p) === 'expert') unlock('expert');
+  }
+  function renderTrophies() {
+    const box = $('troList'); if (!box) return; box.textContent = '';
+    const L = lvl(); $('hLvl').textContent = 'Level ' + L.n; $('hLvlBar').style.width = L.pct + '%'; $('hXp').textContent = L.left + ' / ' + L.need + ' XP';
+    $('troCount').textContent = Object.keys(prog.ach).length + ' of ' + ACH.length;
+    ACH.slice().sort((x, y) => !!prog.ach[y[0]] - !!prog.ach[x[0]]).forEach(a => { const d = document.createElement('div'), i = document.createElement('div'), t = document.createElement('div'), b = document.createElement('b'), sm = document.createElement('small'); d.className = 'tro' + (prog.ach[a[0]] ? '' : ' off'); i.className = 'ic'; i.textContent = a[3] + '︎'; b.textContent = a[1]; sm.textContent = a[2]; t.append(b, sm); d.append(i, t); box.append(d); });
+  }
+  /* ---------- bots that talk ---------- */
+  const BANTER = {
+    start: ['Good luck!', 'Let’s play!', 'Ready when you are.', 'I’ve been practising.'],
+    take: ['Mine now.', 'Thanks for that!', 'Yoink.', 'I’ll take that.'],
+    lost: ['Hey! That was mine.', 'Ouch.', 'I needed that piece.', 'Didn’t see that coming.'],
+    queen: ['My queen! Nooo!', 'Not the queen!'], check: ['Check!', 'Watch your king.', 'Check. Your move.'], checked: ['Whoa, check.', 'Okay, okay.'],
+    castle: ['Safety first.', 'Tucking my king away.'], promo: ['New queen!', 'Look who grew up.']
+  };
+  let lastBanter = 0;
+  function banter(before, m, rec) {
+    if (finished || prefs.chat === false) return;
+    const bot = myColor === 'w' ? 'b' : 'w', byBot = before.turn === bot, pick = k => BANTER[k][Math.floor(Math.random() * BANTER[k].length)];
+    let k = null, must = false;
+    if (game.moves.length <= 2 && byBot && game.moves.length >= 1 && !lastBanter) { k = 'start'; must = true; }
+    else if (!byBot && m.captured && m.captured.toLowerCase() === 'q') { k = 'queen'; must = true; }
+    else if (byBot && m.promo) { k = 'promo'; must = true; }
+    else if (byBot && rec.check) k = 'check';
+    else if (!byBot && rec.check) k = 'checked';
+    else if (byBot && m.captured && PVAL[m.captured.toLowerCase()] >= 3) k = 'take';
+    else if (!byBot && m.captured && PVAL[m.captured.toLowerCase()] >= 3) k = 'lost';
+    else if (byBot && (m.flag === 'castleK' || m.flag === 'castleQ')) k = 'castle';
+    if (!k || (!must && (Date.now() - lastBanter < 9000 || Math.random() < .45))) return;
+    lastBanter = Date.now(); showSay(bot, pick(k));
+  }
   function renderPuzzleCard() {
     renderRush();
     const box = $('puzzleThemes');
@@ -2358,7 +2457,8 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
       me.plies.push({ cls, color: st.turn, best: bestM, bestSan: E.san(st, bestM), mate: a[0].score >= 90000, drop,
         acc: Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * drop) - 3.1669)), evalW: (st.turn === 'w' ? 1 : -1) * played });
     }
-    me.ready = true; me.stats = {};
+    me.ready = true; me.stats = {}; unlock('review');
+    if (me.plies.some(q => q.cls === 'brilliant' && (mode === 'local' || q.color === myColor))) unlock('brill');
     const avg = l => l.length ? Math.round(l.reduce((x, q) => x + q.acc, 0) / l.length) : null;
     const pieces = st => st.b.filter(q => q && !'kKpP'.includes(q)).length;
     const endAt = g.states.findIndex(st => pieces(st) <= 6), eg = endAt < 0 ? n : endAt, op = Math.min(16, eg);
@@ -2910,7 +3010,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   const QC = ['Good luck!', 'Hi!', 'Nice move!', 'Oops', 'Thinking\u2026', 'Good game!', 'Thanks!', 'Rematch?'];
   const sayT = {}; let lastSay = 0;
   function showSay(color, t) { says[color] = t; clearTimeout(sayT[color]); sayT[color] = setTimeout(() => { says[color] = ''; renderStrips(); }, 4000); renderStrips(); tone(0, 660, .1, .06); }
-  QC.forEach((t, i) => { const b = document.createElement('button'); b.textContent = t; b.onclick = () => { if (!og || !og.p2p || Date.now() - lastSay < 1500) return; lastSay = Date.now(); rtcSend(og, { t: 'say', i }); showSay(myColor, t); }; $('qc').append(b); });
+  QC.forEach((t, i) => { const b = document.createElement('button'); b.textContent = t; b.onclick = () => { if (!og || !og.p2p || Date.now() - lastSay < 1500) return; lastSay = Date.now(); rtcSend(og, { t: 'say', i }); unlock('chat'); showSay(myColor, t); }; $('qc').append(b); });
   function renderOnlineBits() {
     const r = mode === 'online' && og && og.p2p && og.opp && !review, st = r && og.data.status;
     $('qc').hidden = !(r && prefs.chat !== false && !og.oppLeft && (st === 'active' || st === 'done'));
@@ -2923,7 +3023,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     newGame();
     myColor = opp === 'w' ? 'b' : 'w'; flipped = myColor === 'b';
     d[myColor] = 'me'; d[opp] = 'opp'; d[opp + 'Elo'] = o.elo; d[opp + 'Rd'] = o.rd; d[myColor + 'Elo'] = profile.elo; d.moves = []; d.status = 'active'; room.startMsg = null;
-    startClock(room.tc || 'none'); sfx.start(); render();
+    startClock(room.tc || 'none'); sfx.start(); unlock('rematch'); render();
   }
   $('rematchBtn').onclick = () => { if (!og || !og.p2p || og.oppLeft || og.wantMe) return; og.wantMe = true; $('bannerOv').hidden = true; rtcSend(og, { t: 'rematch', elo: profile.elo, rd: profile.rd }); if (og.wantOpp) rematch(og); else render(); };
   function setOpp(color, msg) {
@@ -3566,7 +3666,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
   applySettings(); paintSound(); paintColorSeg(); newGame(); restoreGame(); connect();
   function optRow(title, list, cur, paint, pick) {
     const w = document.createElement('div'), h = document.createElement('h4'), r = document.createElement('div'); h.textContent = title; r.className = 'opts';
-    list.forEach(v => { const b = document.createElement('button'); b.type = 'button'; paint(b, v); b.setAttribute('aria-pressed', v[0] === cur()); b.onclick = () => { pick(v[0]); store.set('cc-prefs', prefs); applyTheme(); paintThemes(); r.querySelectorAll('button').forEach((x, i) => x.setAttribute('aria-pressed', list[i][0] === cur())); if (w.after2) w.after2(); render(); }; r.append(b); });
+    list.forEach(v => { const b = document.createElement('button'); b.type = 'button'; paint(b, v); b.setAttribute('aria-pressed', v[0] === cur()); b.onclick = () => { pick(v[0]); store.set('cc-prefs', prefs); unlock('style'); applyTheme(); paintThemes(); r.querySelectorAll('button').forEach((x, i) => x.setAttribute('aria-pressed', list[i][0] === cur())); if (w.after2) w.after2(); render(); }; r.append(b); });
     w.append(h, r); return w;
   }
   const PN = { k: 'King', q: 'Queen', r: 'Rook', b: 'Bishop', n: 'Knight', p: 'Pawn' };
@@ -3651,7 +3751,7 @@ window.STOCKFISH_SRC = "/*!\n * Stockfish copyright T. Romstad, M. Costalba, J. 
     }
     lSel = lState.b[sq] && E.colorOf(lState.b[sq]) === 'w' ? sq : -1; lDraw();
   };
-  $('lNext').onclick = () => { if (!lOk) return; if (++lAt < LESSONS.length) return lesson(); store.set('cc-learn', 1); $('learnModal').hidden = true; sfx.win(); confetti(); if (skill === 0 || prefs.bot === 0) { goTo('bot'); if (mode === 'bot' && !inProgress()) newGame(); toast('Tutorial finished! Try a game against ' + foe().name + '.'); } else { renderHome(); toast('Tutorial finished!'); } };
+  $('lNext').onclick = () => { if (!lOk) return; if (++lAt < LESSONS.length) return lesson(); store.set('cc-learn', 1); unlock('tutor'); addXp(60); $('learnModal').hidden = true; sfx.win(); confetti(); if (skill === 0 || prefs.bot === 0) { goTo('bot'); if (mode === 'bot' && !inProgress()) newGame(); toast('Tutorial finished! Try a game against ' + foe().name + '.'); } else { renderHome(); toast('Tutorial finished!'); } };
   $('lQuit').onclick = () => { $('learnModal').hidden = true; renderHome(); };
   $('hLearn').onclick = startLearn;
   if (!store.get('cc-onboard', 0)) { $('introModal').hidden = false; introStep(); }
